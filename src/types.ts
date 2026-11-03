@@ -8,6 +8,8 @@ export interface KnowledgeItem {
   alternatives: string[];
   keywords: string[];
   answerMS: string;
+  /** Optional teacher-recorded human voice. Base64 audio, saved with the answer. */
+  audioMS?: string;
   answerZH?: string;
   enabled: boolean;
 }

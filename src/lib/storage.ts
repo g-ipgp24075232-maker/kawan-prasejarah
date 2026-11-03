@@ -1,6 +1,7 @@
 import type { AppData, AvatarSettings, KnowledgeItem, QuizItem } from '../types';
 import { ERAS } from '../types';
 import { initialData } from '../data/seed';
+import { validAnswerAudio } from './audio';
 
 const STORAGE_KEY = 'kawan-prasejarah-draft-v1';
 const PIN_KEY = 'kawan-prasejarah-pin-v1';
@@ -19,7 +20,7 @@ export function parseBackup(source: string): AppData {
     if (!isRecord(raw) || !text(raw.id) || !text(raw.question) || !text(raw.answerMS) || !strings(raw.alternatives) || !strings(raw.keywords) ||
       !ERAS.includes(raw.era as never) || typeof raw.enabled !== 'boolean') throw new Error(`Soalan ${index + 1} tidak sah.`);
     return { id: raw.id.slice(0, 80), era: raw.era as KnowledgeItem['era'], question: raw.question.slice(0, 500),
-      answerMS: raw.answerMS.slice(0, 2000), answerZH: text(raw.answerZH) ? raw.answerZH.slice(0, 2000) : '',
+      answerMS: raw.answerMS.slice(0, 2000), audioMS: validAnswerAudio(raw.audioMS) ? raw.audioMS : undefined, answerZH: text(raw.answerZH) ? raw.answerZH.slice(0, 2000) : '',
       alternatives: raw.alternatives.slice(0, 20).map(v => v.slice(0, 500)),
       keywords: raw.keywords.slice(0, 30).map(v => v.slice(0, 100)), enabled: raw.enabled };
   });

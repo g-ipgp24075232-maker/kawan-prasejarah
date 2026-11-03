@@ -87,3 +87,18 @@ The default avatar is an actual drawn layered SVG, not a still picture. It has s
 ## How to change the code
 
 `src/components/Avatar.tsx` and `src/styles.css` contain the editable drawn avatar and animation styles. `src/data/seed.ts` holds initial questions and quizzes. `src/lib/matcher.ts` contains local matching rules; `src/lib/speech.ts` handles browser audio; `src/components/TeacherPanel.tsx` contains the teacher editor. `supabase/schema.sql` contains the online authorization policies.
+
+
+## 🎙️ Suara manusia sebenar untuk jawapan (kemas kini)
+
+Aki **boleh bercakap kuat**, bukan hanya memaparkan teks.
+
+- Masuk **Mod Guru → Bank Soalan → Edit Soalan**.
+- Dalam bahagian **Suara Jawapan Manusia**, tekan **Rakam Dengan Mikrofon** atau **Muat Naik Audio** (MP3, M4A, WAV, OGG, WebM).
+- Sebut jawapan dalam Bahasa Melayu, hentikan rakaman, dengar contoh, kemudian tekan **Simpan Soalan**.
+- Murid boleh menaip, menyebut, atau menekan soalan cadangan. Apabila jawapan sepadan, avatar memainkan **rakaman suara cikgu dahulu** sambil menggerakkan mulut. Tekan **Ulang Jawapan** untuk mendengarnya semula.
+- Tanpa rakaman, app memilih suara sintetik Bahasa Melayu yang tersedia; jika tiada tetapi suara Indonesia ada, suara Indonesia menjadi pilihan terakhir (sebutan mungkin berbeza). Jika peranti tidak menyokong suara tersebut, jawapan masih terpapar.
+
+**Rakaman manusia ≠ suara AI.** Web Speech API menghasilkan suara sintetik dan bergantung pada pelayar/peranti. Rakaman audio pilihan guru ialah suara manusia sebenar tanpa API berbayar.
+
+**Storan & privasi:** Rakaman dikodkan sebagai data audio dalam draf JSON dan disimpan di pelayar dahulu. Had fail ialah **700 KB setiap jawapan**; banyak rakaman boleh memenuhi kuota localStorage (~beberapa MB, bergantung pada pelayar). Gunakan MP3 mono yang pendek dan **Eksport JSON** sebagai sandaran. Jika Supabase telah disediakan, draf boleh diterbitkan dalam pangkalan data (tertakluk kepada had saiz/perkhidmatan); jika tidak, rakaman hanya tersedia di peranti yang mengimport/simpan draf. Mikrofon digunakan hanya selepas guru memberi izin; tiada audio dihantar ke API TTS berbayar. Audio pilihan guru memerlukan tindakan awal pengguna (menghantar soalan / mengklik jawapan), selaras dengan polisi autoplay pelayar.
