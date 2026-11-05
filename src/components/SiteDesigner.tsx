@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Eye, ImagePlus, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { DEFAULT_SITE } from '../data/site';
+import { prepareImage } from '../lib/imageTools';
 import type { SiteArt, SiteDesign } from '../types';
 
 interface Props {value:SiteDesign;onChange:(design:SiteDesign)=>void;onPreview:()=>void;}
@@ -61,32 +62,29 @@ const decor:{key:'artLeft'|'artRight'|'artChat';label:string}[]=[
 
 function ImagePicker({label,image,onChange}: {label:string;image:string;onChange:(value:string)=>void}){
   const [error,setError]=useState('');
+  const [notice,setNotice]=useState('');
+  const [loading,setLoading]=useState(false);
   return <div className="designer-image-card">
     <strong>{label}</strong>
     {image?<img className="designer-image-preview" src={image} alt={'Pratonton '+label}/>:<div className="designer-image-empty"><ImagePlus size={28}/><span>Belum ada imej</span></div>}
     <div className="designer-image-actions">
-      <label className="btn btn-soft designer-upload"><Upload size={16}/> Muat Naik Gambar
+      <label className="btn btn-soft designer-upload"><Upload size={16}/> {loading?'Memproses gambar…':'Muat Naik Gambar'}
         <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
-          onChange={event=>{
+          onChange={async event=>{
             const file=event.target.files?.[0];event.target.value='';
             if(!file)return;
-            if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)){
-              setError('Gunakan fail PNG, JPG, WEBP atau GIF.');return;
-            }
-            if(file.size>850_000){setError('Fail terlalu besar. Had 850 KB bagi setiap gambar.');return;}
-            const reader=new FileReader();
-            reader.onload=()=>{
-              const imageData=reader.result;
-              if(typeof imageData==='string'&&/^data:image\/(png|jpeg|webp|gif);base64,/i.test(imageData)){
-                onChange(imageData);setError('');
-              } else setError('Gagal membaca gambar.');
-            };
-            reader.onerror=()=>setError('Gagal membaca gambar.');
-            reader.readAsDataURL(file);
+            setError('');setNotice('');setLoading(true);
+            try{
+              const ready=await prepareImage(file);
+              onChange(ready.data);
+              setNotice(ready.message+' Tekan Lihat Laman Sebenar untuk melihat perubahan.');
+            }catch(error){setError(error instanceof Error?error.message:'Gambar tidak berjaya dimuat naik.');}
+            finally{setLoading(false);}
           }}/></label>
       {image&&<button className="btn btn-soft" type="button" onClick={()=>onChange('')}><Trash2 size={15}/> Padam</button>}
     </div>
-    {error&&<small className="designer-error">{error}</small>}
+    {error&&<small className="designer-error" role="alert">{error}</small>}
+    {notice&&<small className="designer-success" role="status">{notice}</small>}
   </div>;
 }
 function Slider({label,value,min,max,step=1,unit='',onChange}:{label:string;value:number;min:number;max:number;step?:number;unit?:string;onChange:(v:number)=>void}){
