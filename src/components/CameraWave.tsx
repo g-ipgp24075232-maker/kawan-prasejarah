@@ -4,11 +4,11 @@ import { WaveDetector } from '../lib/wave';
 import type { HandLandmarker } from '@mediapipe/tasks-vision';
 
 type Status='off'|'starting'|'ready'|'error';
-interface Props {onWave:()=>void;}
+interface Props {onWave:()=>void;content:{title:string;description:string;start:string;stop:string;privacy:string;ready:string;detected:string;missing:string};}
 const MODEL='https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 const WASM='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm';
 
-export default function CameraWave({onWave}:Props){
+export default function CameraWave({onWave,content}:Props){
   const video=useRef<HTMLVideoElement>(null);
   const stream=useRef<MediaStream|null>(null);
   const detector=useRef<HandLandmarker|null>(null);
@@ -54,7 +54,7 @@ export default function CameraWave({onWave}:Props){
       });
       if(id!==session.current){handDetector.close();return;}
       detector.current=handDetector;
-      setStatus('ready');setMessage('Kamera aktif. Angkat tapak tangan dan lambai ke kiri dan kanan!');
+      setStatus('ready');setMessage(content.ready);
       const tick=()=>{
         if(id!==session.current)return;
         const element=video.current;
@@ -84,16 +84,16 @@ export default function CameraWave({onWave}:Props){
   function stop(){cleanup();setStatus('off');setMessage('Kamera dimatikan.');}
 
   return <section className="camera-wave-card" aria-label="Interaksi lambaian kamera">
-    <div className="camera-wave-heading"><Hand size={20}/><div><strong>Lambai kepada Aki!</strong><span>Buka kamera, lambai tangan, Aki akan lambai balik.</span></div></div>
+    <div className="camera-wave-heading"><Hand size={20}/><div><strong>{content.title}</strong><span>{content.description}</span></div></div>
     {status==='off'||status==='error'
-      ?<button type="button" className="camera-start" onClick={()=>void start()}><Camera size={18}/> Buka Kamera</button>
-      :<button type="button" className="camera-stop" onClick={stop}><CameraOff size={18}/> Tutup Kamera</button>}
+      ?<button type="button" className="camera-start" onClick={()=>void start()}><Camera size={18}/> {content.start}</button>
+      :<button type="button" className="camera-stop" onClick={stop}><CameraOff size={18}/> {content.stop}</button>}
     {status==='starting'&&<span className="camera-loading"><LoaderCircle size={16}/> Memuatkan pengesan tangan…</span>}
     <div className={'camera-preview '+(status==='off'||status==='error'?'camera-hidden':'')}>
       <video ref={video} autoPlay playsInline muted aria-label="Pratonton kamera sendiri"/>
-      {status==='ready'&&<span className={'camera-indicator '+(handFound?'detected':'')}>{handFound?'Tangan dikesan':'Tunjukkan tapak tangan'}</span>}
+      {status==='ready'&&<span className={'camera-indicator '+(handFound?'detected':'')}>{handFound?content.detected:content.missing}</span>}
     </div>
     {message&&<p className="camera-message" role="status">{message}</p>}
-    <small>Kamera hanya diaktifkan selepas kamu tekan butang. Video diproses pada peranti, tidak disimpan atau dihantar ke pelayan. Model mungkin perlu dimuat turun sekali.</small>
+    <small>{content.privacy}</small>
   </section>;
 }
