@@ -88,6 +88,14 @@ export default function App(){
     // Match the visible bubble to its original source so edits show immediately,
     // without resetting the pupil's currently displayed question to a greeting.
     const changedGreeting=data.settings.greeting!==next.settings.greeting;
+    // The teacher is editing the welcome dialogue: preview it on the homepage
+    // even if an earlier pupil answer was the last thing shown.
+    if(changedGreeting&&teacherOpen&&!voice.isSpeaking){
+      replySource.current={kind:'greeting'};
+      replyText.current=next.settings.greeting;
+      setReply(next.settings.greeting);
+      setReplyRecording(undefined);
+    }
     const shown=resolveDialogue(replySource.current,next);
     if(shown && (shown.text!==replyText.current || changedGreeting&&replySource.current.kind==='greeting')){
       replyText.current=shown.text;
@@ -97,7 +105,7 @@ export default function App(){
     setData(next);
     try{persistData(next);setSaveError('');}
     catch{setSaveError('Storan pelayar telah penuh. Eksport JSON dan kurangkan saiz imej; perubahan terbaru belum disimpan secara kekal.');}
-  },[data.settings.greeting]);
+  },[data.settings.greeting,teacherOpen,voice.isSpeaking]);
   useEffect(()=>{if(animation==='listening' && !voice.isListening)setAnimation('idle');},[voice.isListening,animation]);
   const beginMic=()=>{
     if(voice.isListening){voice.stopListening();setAnimation('idle');return;}
