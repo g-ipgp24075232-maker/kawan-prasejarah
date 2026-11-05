@@ -115,3 +115,80 @@
 .avatar-long-hair{transform-origin:210px 145px;animation:aki-hair-sway 5.5s ease-in-out infinite alternate;pointer-events:none}
 .avatar-braids{pointer-events:none}
 @keyframes aki-hair-sway{from{transform:rotate(-1deg)}to{transform:rotate(1.4deg)}}
+
+
+/* Site editor: all public website colors, art and layout follow student site settings. */
+.custom-site{background-color:var(--site-bg)!important;color:var(--site-text)!important}
+.custom-site .simple-header{background-color:var(--site-header);border-radius:0 0 16px 16px;padding:0 12px}
+.custom-site .simple-main{width:min(var(--site-width),calc(100% - 28px));gap:0}
+.custom-site .simple-hero{padding-top:var(--site-hero-pad);isolation:isolate}
+.custom-site .simple-chat{background:var(--site-chat)!important;border-radius:var(--site-radius)!important;isolation:isolate}
+.custom-site .simple-bubble{background-color:var(--site-bubble)!important}
+.custom-site .simple-intro h1 span,.custom-site .brand-text em{color:var(--site-accent)!important}
+.custom-site .brand-text strong,.custom-site .simple-intro h1,.custom-site .simple-chat h2,
+.custom-site .simple-chat h3,.custom-site .simple-intro p{color:var(--site-text)}
+.custom-site .teacher-button,.custom-site .send-button,.custom-site .camera-start{background:var(--site-button)!important}
+.custom-site .simple-eyebrow,.custom-site .bubble-label{color:var(--site-accent)}
+.custom-site .simple-header,.custom-site .simple-main,.custom-site .simple-footer{font-size:calc(1rem * var(--site-font-size))}
+.custom-site .simple-intro h1{font-size:clamp(27px,calc(40px * var(--site-font-size)),56px)}
+.custom-site .simple-intro p{font-size:calc(15px * var(--site-font-size))}
+.custom-site .simple-chat-heading h2{font-size:calc(22px * var(--site-font-size))}
+.custom-site .simple-chat-heading p{font-size:calc(13px * var(--site-font-size))}
+.custom-site .simple-bubble p{font-size:calc(14px * var(--site-font-size))}
+.custom-site .simple-footer{font-family:inherit}
+.custom-site .site-brand-art{width:100%;height:100%;object-fit:contain;transform:rotate(8deg)}
+.custom-site .site-artwork{position:absolute;z-index:-1;transform:translate(-50%,-50%);height:auto;max-width:none;object-fit:contain;pointer-events:none;user-select:none}
+.custom-site .site-artwork-chat{z-index:-1}
+.custom-site .simple-hero,.custom-site .simple-chat{position:relative}
+.custom-site .simple-hero>:not(.site-artwork),.custom-site .simple-chat>:not(.site-artwork){position:relative;z-index:2}
+.custom-site .simple-chat .site-artwork{position:absolute}
+.custom-site .simple-tap-note{position:relative;z-index:4}
+.custom-site .simple-avatar-area{z-index:3}
+.custom-site .simple-chat .ask-controls{position:relative;z-index:3}
+.custom-site .simple-chat{overflow:visible}
+.custom-site .brand-badge{flex-shrink:0}
+.custom-site .teacher-button{white-space:nowrap}
+@media(max-width:650px){
+ .custom-site .simple-main{width:calc(100% - 18px)}
+ .custom-site .site-artwork{max-width:60vw}
+ .custom-site .simple-intro h1{font-size:clamp(24px,calc(30px * var(--site-font-size)),43px)}
+}
+/* Teacher no-code design studio. */
+.site-designer{display:flex;flex-direction:column;gap:16px}
+.designer-header-actions,.designer-bottom,.designer-image-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.designer-nav{display:flex;gap:7px;flex-wrap:wrap;border-bottom:1px solid #dde9dc;padding-bottom:12px}
+.designer-nav button{border:1px solid #d3e4d0;background:#f7faf5;border-radius:22px;padding:9px 13px;font-size:12px;font-weight:800;color:#48684e}
+.designer-nav button.active{background:#347449;color:white}
+.designer-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.designer-form-grid>label{display:flex;flex-direction:column;gap:5px;font-weight:750;font-size:13px;color:#4f6651}
+.designer-form-grid .designer-wide{grid-column:1/-1}
+.designer-form-grid input,.designer-form-grid select{width:100%;padding:10px 11px;border:1px solid #dce9d8;border-radius:10px;background:white;color:#344935;font-size:13px}
+.designer-color-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}
+.designer-color{display:flex;align-items:center;justify-content:space-between;background:#f8faf5;border:1px solid #e3ebdc;border-radius:12px;padding:10px 12px;gap:10px}
+.designer-color>span{font-size:12px;font-weight:750}
+.designer-color input{height:37px;width:47px;flex-shrink:0;padding:0;border:0;background:transparent;cursor:pointer}
+.designer-art-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.designer-image-card{background:#f9fbf6;border:1px solid #dde9d8;border-radius:15px;padding:13px;display:flex;flex-direction:column;gap:10px}
+.designer-image-card>strong{font-size:13px}
+.designer-image-preview{display:block;width:100%;height:125px;object-fit:contain;background:repeating-conic-gradient(#ebf0e6 0% 25%,#fff 0% 50%) 50%/18px 18px;border-radius:10px}
+.designer-image-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;min-height:90px;background:#eaf1e5;color:#779173;border-radius:10px;font-size:12px}
+.designer-image-actions .btn{padding:9px 13px;font-size:12px}
+.designer-upload{position:relative;cursor:pointer}
+.designer-upload input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.designer-error{color:#a83a39}
+.designer-slider{display:flex;flex-direction:column;gap:7px;background:#f8faf6;border:1px solid #e7ece2;border-radius:12px;padding:10px 14px}
+.designer-slider>span{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px}
+.designer-slider b{font-variant-numeric:tabular-nums}
+.designer-slider input{width:100%;accent-color:#347449}
+.designer-decoration{margin-top:14px;display:grid;grid-template-columns:minmax(190px,240px) 1fr;gap:12px;align-items:start;border-bottom:1px solid #dce8d8;padding-bottom:16px}
+.designer-position-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.designer-toggle{display:flex;gap:10px;align-items:center;border:1px solid #e1ebdf;border-radius:13px;padding:10px 13px;font-size:13px;font-weight:750;cursor:pointer}
+.designer-toggle input{width:20px;height:20px;accent-color:#347449}
+.designer-bottom{justify-content:space-between;padding-top:10px;border-top:1px solid #dce8d8}
+.site-designer h4{margin:8px 0 0}
+@media(max-width:690px){
+ .designer-decoration{grid-template-columns:1fr}
+ .designer-position-grid{grid-template-columns:1fr}
+ .designer-form-grid{grid-template-columns:1fr}
+ .designer-nav button{font-size:11px;padding:8px 11px}
+}
