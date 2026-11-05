@@ -240,3 +240,30 @@
 @keyframes aki-custom-wave{from{transform:rotate(-2deg)}to{transform:rotate(2.4deg)}}
 @keyframes aki-custom-jump{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
 @media(prefers-reduced-motion:reduce){.custom-pose-avatar .pose-waving,.custom-pose-avatar .pose-jumping{animation:none}}
+
+
+/* Teacher can replace Aki with three registered animation poses. */
+.pose-editor{display:flex;flex-direction:column;gap:13px;padding:17px 0;border-top:1px solid #dce9d4;border-bottom:1px solid #dce9d4}
+.pose-editor .teacher-subtitle{margin:0}
+.pose-import{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#ecf7e9;border:1px solid #c9e3c6}
+.pose-import strong{font-weight:900;color:#315f3b}
+.pose-import p{margin:5px 0 0;color:#587359;font-size:12px}
+.pose-import .btn{flex-shrink:0}
+.pose-upload-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.pose-upload-card{border:1px solid #d8e7d6;border-radius:14px;padding:11px;display:flex;flex-direction:column;gap:8px;min-width:0;background:#f8fbf6}
+.pose-upload-card strong{font-size:12px;color:#376440}
+.pose-upload-card p{font-size:11px;color:#66816b;margin:0;line-height:1.35;min-height:30px}
+.pose-upload-preview{height:130px;width:100%;object-fit:contain;border-radius:10px;background:repeating-conic-gradient(#e3eada 0 25%,#fff 0 50%) 50%/18px 18px}
+.pose-upload-placeholder{height:130px;display:flex;align-items:center;justify-content:center;gap:5px;flex-direction:column;background:#e7f1e0;color:#829885;border-radius:10px;font-size:11px}
+.pose-upload-action{position:relative;cursor:pointer;justify-content:center}
+.pose-upload-action input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.pose-upload-card .btn{font-size:11px;white-space:normal}
+.pose-blink-controls{display:flex;flex-direction:column;gap:9px;padding:12px;border-radius:13px;background:#f8faf4}
+.pose-blink-controls>strong{font-size:13px}
+.pose-blink-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pose-blink-grid label{display:flex;gap:5px;flex-direction:column;font-size:12px;font-weight:700}
+.pose-blink-grid input[type=range]{width:100%;accent-color:#3f8051}
+.pose-blink-grid input[type=color]{width:64px;height:34px;padding:0;border:0;background:transparent}
+.pose-editor-message{font-size:12px;font-weight:800;padding:11px;border-radius:10px;background:#fff4d9;color:#79582e}
+@media(max-width:830px){.pose-upload-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pose-import{flex-wrap:wrap}}
+@media(max-width:440px){.pose-upload-grid{grid-template-columns:1fr}.pose-blink-grid{grid-template-columns:1fr}}
