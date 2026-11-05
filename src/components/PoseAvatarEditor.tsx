@@ -4,13 +4,13 @@ import type { AvatarSettings,AvatarPose } from '../types';
 import { prepareAvatarPose } from '../lib/imageTools';
 import { parseAvatarPosePack } from '../lib/avatarPack';
 
-interface Props{settings:AvatarSettings;onChange:(update:Partial<AvatarSettings>)=>void;onPreview:()=>void;}
+interface Props{settings:AvatarSettings;onChange:(update:Partial<AvatarSettings>)=>void;onPreview:()=>void;onTestWave:()=>void;}
 const items:{key:AvatarPose;label:string;description:string}[]=[
   {key:'idle',label:'Aki Biasa',description:'Pose biasa: mata terbuka, mulut tertutup'},
   {key:'talk',label:'Aki Bercakap',description:'Hanya kawasan mulut digunakan untuk animasi suara'},
   {key:'wave',label:'Aki Melambai',description:'Gambar Aki mengangkat tangan'}
 ];
-export default function PoseAvatarEditor({settings,onChange,onPreview}:Props){
+export default function PoseAvatarEditor({settings,onChange,onPreview,onTestWave}:Props){
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const packFile=useRef<HTMLInputElement>(null);
@@ -38,7 +38,7 @@ export default function PoseAvatarEditor({settings,onChange,onPreview}:Props){
   }
   return <section className="pose-editor">
     <h4 className="teacher-subtitle">Studio Animasi Aki – Gambar Sendiri</h4>
-    <p className="muted-copy">Muat naik tiga gambar Aki yang sepadan. Aki tidak berkelip mata. Semasa bercakap, gambar biasa kekal dan hanya mulut terbuka sedikit serta bergerak dengan lembut. Gambar melambai digunakan apabila Aki melambai.</p>
+    <p className="muted-copy">Muat naik tiga gambar Aki yang sepadan. Aki tidak berkelip mata. Semasa bercakap, gambar biasa kekal dan hanya mulut terbuka sedikit serta bergerak dengan lembut. Gambar melambai digunakan untuk menggerakkan tangan Aki secara berasingan, tanpa menggoyangkan seluruh badan.</p>
     <div className="pose-import">
       <div><strong>Import Pek Aki (3 Gambar Sekali Gus)</strong><p>Jika cikgu mempunyai fail <code>aki-avatar-pack.json</code>, import untuk memasang ketiga-tiga gambar terus.</p></div>
       <button type="button" className="btn btn-primary" disabled={busy} onClick={()=>packFile.current?.click()}><FileUp size={17}/> Import Pek Aki</button>
@@ -71,6 +71,7 @@ export default function PoseAvatarEditor({settings,onChange,onPreview}:Props){
     {message&&<p className="pose-editor-message" role="status">{message}</p>}
     <div className="form-actions">
       <button className="btn btn-primary" type="button" onClick={onPreview}>Pratonton Aki di Laman Utama</button>
+      <button className="btn btn-soft" type="button" onClick={onTestWave} disabled={!settings.poses.wave}>Uji Lambaian Tangan</button>
       {settings.poses.idle&&<button className="btn btn-soft" type="button" onClick={()=>{
         if(window.confirm('Kembali kepada avatar asal? Gambar tiga pose akan dikosongkan, tetapi bank soalan dan rakaman kekal.'))
           onChange({poses:{},blink:settings.blink});

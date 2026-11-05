@@ -1,4 +1,6 @@
+import { useEffect,useState } from 'react';
 import type { CSSProperties } from 'react';
+import { splitWaveImage,HAND_PIVOT,type WaveSprite } from '../lib/handWave';
 import type { Animation,AvatarSettings } from '../types';
 import { chooseAvatarPose } from '../lib/avatarMotion';
 
@@ -19,9 +21,21 @@ const hitTargets:{part:TouchArea;left:number;top:number;width:number;height:numb
 ];
 // Aki remains in one image. Only the photo's mouth patch is animated.
 export default function CustomPoseAvatar({settings,animation,speaking=false,onInteract}:Props){
+  const [waveLayers,setWaveLayers]=useState<WaveSprite|null>(null);
+  useEffect(()=>{
+    let active=true;
+    setWaveLayers(null);
+    if(settings.poses.wave){
+      splitWaveImage(settings.poses.wave)
+        .then(images=>{if(active)setWaveLayers(images);})
+        .catch(()=>{if(active)setWaveLayers(null);});
+    }
+    return ()=>{active=false;};
+  },[settings.poses.wave]);
   const pose=chooseAvatarPose(speaking,animation,settings.poses);
-  const portrait=settings.poses[pose]??settings.poses.idle;
   const waving=animation==='waving'&&!speaking;
+  const animatedWave=waving&&waveLayers!==null;
+  const portrait=animatedWave?waveLayers.body:settings.poses[pose]??settings.poses.idle;
   const mouth=settings.mouth;
   const mouthMask=`radial-gradient(ellipse ${mouth.width}% ${mouth.height}% at ${mouth.x}% ${mouth.y}%, #000 44%, rgba(0,0,0,.92) 62%, transparent 100%)`;
   const mouthStyle:CSSProperties={
@@ -30,9 +44,13 @@ export default function CustomPoseAvatar({settings,animation,speaking=false,onIn
     transformOrigin:mouth.x+'% '+mouth.y+'%'
   };
   return <div className={'custom-pose-avatar pose-state-'+animation+(speaking?' pose-speaking':'')}
-      role="img" aria-label="Aki, watak kartun prasejarah yang menggerakkan mulut dengan lembut semasa bercakap">
-    <div className={'custom-pose-character'+(waving?' pose-waving':'')+(animation==='jumping'?' pose-jumping':'')}>
+      role="img" aria-label="Aki, watak kartun prasejarah yang melambai dengan tangan bergerak dan menggerakkan mulut ketika bercakap">
+    <div className={'custom-pose-character'+(animation==='jumping'?' pose-jumping':'')}>
       <img className="custom-pose-image" src={portrait} alt="Aki" draggable={false}/>
+      {animatedWave&&<img className="custom-pose-image pose-animated-hand"
+        src={waveLayers.hand} style={{transformOrigin:HAND_PIVOT.x+'% '+HAND_PIVOT.y+'%'}}
+        alt="" aria-hidden="true" draggable={false}/>}
+
       {settings.poses.talk&&<img
         className={'custom-pose-image pose-mouth-overlay'+(speaking?' is-speaking':'')}
         src={settings.poses.talk}

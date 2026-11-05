@@ -68,7 +68,7 @@ export default function App(){
     busyToken.current++;
     const token=busyToken.current;
     setAnimation('waving');
-    later(()=>{if(busyToken.current===token)say(message,'talking');},1100);
+    later(()=>{if(busyToken.current===token)say(message,'talking');},1600);
   },[voice,later,say]);
   const handleTouch=useCallback((area:TouchArea)=>{
     const reacts:Record<TouchArea,Animation>={head:'happy',belly:'laughing',leftHand:'waving',rightHand:'happy',feet:'jumping',face:'surprised'};
@@ -170,6 +170,14 @@ export default function App(){
       onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}}
       onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}}
       onPreview={()=>setTeacherOpen(false)}
+      onTestWave={()=>{
+        setTeacherOpen(false);
+        voice.stopSpeaking();
+        busyToken.current++;
+        const token=busyToken.current;
+        setAnimation('waving');
+        later(()=>{if(busyToken.current===token)setAnimation('idle');},2300);
+      }}
       voiceNames={voice.voices.filter(v=>isIndonesianVoice(v.lang)).map((v,index)=>({value:v.voiceURI,
         label:(voiceGender(v.name)==='female'?'Suara wanita':'Pilihan suara')+' '+(index+1)}))}/>}
   </div>;

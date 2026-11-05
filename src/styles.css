@@ -375,3 +375,27 @@
     transform:scaleY(.84);
   }
 }
+
+/* Actual articulated hand wave: only the hand turns about its wrist.
+   Never rotate or wobble the entire Aki character while waving. */
+.custom-site .custom-pose-character.pose-waving{animation:none!important}
+.custom-pose-avatar .pose-animated-hand{
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  -webkit-user-drag:none;
+  z-index:3;
+  will-change:transform;
+  animation:aki-real-hand-wave 560ms ease-in-out infinite alternate;
+}
+@keyframes aki-real-hand-wave{
+  from{transform:rotate(-19deg)}
+  to{transform:rotate(19deg)}
+}
+@media(prefers-reduced-motion:reduce){
+  .custom-pose-avatar .pose-animated-hand{animation:none!important}
+}

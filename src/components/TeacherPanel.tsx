@@ -18,6 +18,7 @@ interface Props {
   onSay:(value:string,audio?:string)=>void;
   onAnimate:()=>void;
   onPreview:()=>void;
+  onTestWave:()=>void;
   voiceNames:{value:string,label:string}[];
 }
 const newQuestion=():KnowledgeItem=>({id:crypto.randomUUID(),era:'Paleolitik',question:'',alternatives:[],keywords:[],answerMS:'',answerZH:'',enabled:true});
@@ -46,7 +47,7 @@ function UploadImage({label,image,onLoaded}: {label:string;image:string;onLoaded
   </div>;
 }
 
-export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPreview,voiceNames}:Props) {
+export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPreview,onTestWave,voiceNames}:Props) {
   const [unlocked,setUnlocked]=useState(false);
   const [onlineAuth,setOnlineAuth]=useState(false);
   const [localChoice,setLocalChoice]=useState(!cloudAvailable);
@@ -142,7 +143,7 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPr
         <label>Kelajuan Suara: {settings.speechRate.toFixed(2)}×<input type="range" min="0.6" max="1.5" step="0.05" value={settings.speechRate} onChange={e=>updateSettings({speechRate:Number(e.target.value)})}/></label><label>Saiz Avatar: {settings.size} px<input type="range" min="270" max="580" value={settings.size} onChange={e=>updateSettings({size:Number(e.target.value)})}/></label>
         <label>Kedudukan Melintang: {settings.horizontalOffset} px<input type="range" min="-160" max="160" value={settings.horizontalOffset} onChange={e=>updateSettings({horizontalOffset:Number(e.target.value)})}/></label><label>Warna Kulit<input type="color" value={settings.skinColor} onChange={e=>updateSettings({skinColor:e.target.value})}/></label><label>Warna Rambut<input type="color" value={settings.hairColor} onChange={e=>updateSettings({hairColor:e.target.value})}/></label><label>Warna Pakaian<input type="color" value={settings.clothingColor} onChange={e=>updateSettings({clothingColor:e.target.value})}/></label></div>
         <h4 className="teacher-subtitle">Kata-kata Reaksi</h4><div className="edit-grid">{(Object.keys(settings.reactions) as (keyof AvatarSettings['reactions'])[]).map(key=><label key={key}>Reaksi {key}<input value={settings.reactions[key]} onChange={e=>updateReaction(key,e.target.value)}/></label>)}</div>
-        <PoseAvatarEditor settings={settings} onChange={updateSettings} onPreview={onPreview}/>
+        <PoseAvatarEditor settings={settings} onChange={updateSettings} onPreview={onPreview} onTestWave={onTestWave}/>
         <h4 className="teacher-subtitle">Gambar & Lapisan Animasi</h4><p className="muted-copy">Untuk animasi menggunakan tiga gambar, gunakan Studio Animasi Aki di atas. Imej penuh biasa tidak mempunyai animasi mulut berasingan. Untuk animasi kepala, mulut dan tangan, muat naik setiap bahagian secara berlapis. Gambar hiasan dan latar halaman boleh disunting pada Reka Bentuk Laman.</p>
         <div className="upload-grid"><UploadImage label="Gambar latar halaman" image={data.site.backgroundImage} onLoaded={image=>onChange({...data,settings:{...settings,backgroundImage:image},site:{...data.site,backgroundImage:image,backgroundOverlay:15}})}/><UploadImage label="Imej penuh avatar (statik)" image={settings.fullArtwork} onLoaded={image=>updateSettings({fullArtwork:image,layers:{}})}/>{(['head','torso','leftArm','rightArm','legs','mouth'] as ArtPart[]).map(v=><UploadImage key={v} label={`Lapisan ${v}`} image={settings.layers[v]||''} onLoaded={image=>updateSettings({layers:{...settings.layers,[v]:image},fullArtwork:''})}/>)}</div><div className="form-actions"><button className="btn btn-soft" onClick={()=>onChange({...data,settings:{...settings,backgroundImage:'',fullArtwork:'',layers:{}},site:{...data.site,backgroundImage:''}})}><RotateCcw size={16}/> Padam Semua Imej Muat Naik</button><button className="btn btn-soft" onClick={()=>onSay(settings.greeting)}><Volume2 size={16}/> Uji Ucapan</button></div>
       </>}
