@@ -20,7 +20,7 @@ export default function App(){
   const [currentQuestion,setCurrentQuestion]=useState('');
   const [reply,setReply]=useState(initialData.settings.greeting);
   const [replyRecording,setReplyRecording]=useState<string|undefined>();
-  const [animation,setAnimation]=useState<Animation>('waving');
+  const [animation,setAnimation]=useState<Animation>('idle');
   const [feedback,setFeedback]=useState('');
   const [teacherOpen,setTeacherOpen]=useState(false);
   const [cloudNote,setCloudNote]=useState('');
@@ -62,10 +62,19 @@ export default function App(){
       else {say(dataSettings.unknownAnswer,'confused');}
     },550);
   },[data.questions,dataSettings.unknownAnswer,later,say,voice]);
+  const waveThenSpeak=useCallback((message:string)=>{
+    // Show the waving photograph visibly before starting speech.
+    voice.stopSpeaking();
+    busyToken.current++;
+    const token=busyToken.current;
+    setAnimation('waving');
+    later(()=>{if(busyToken.current===token)say(message,'talking');},1100);
+  },[voice,later,say]);
   const handleTouch=useCallback((area:TouchArea)=>{
     const reacts:Record<TouchArea,Animation>={head:'happy',belly:'laughing',leftHand:'waving',rightHand:'happy',feet:'jumping',face:'surprised'};
+    if(area==='leftHand'){waveThenSpeak(dataSettings.reactions[area]);return;}
     say(dataSettings.reactions[area],reacts[area]);
-  },[dataSettings.reactions,say]);
+  },[dataSettings.reactions,say,waveThenSpeak]);
   const handleUpdate=useCallback((next:AppData)=>{
     if(data.settings.greeting!==next.settings.greeting){setReply(current=>current===data.settings.greeting?next.settings.greeting:current);}
     setData(next);
@@ -134,7 +143,7 @@ export default function App(){
       <button onClick={()=>voice.setMuted(v=>!v)}>{voice.muted?<VolumeX size={16}/>:<Volume2 size={16}/>} {voice.muted?site.unmuteLabel:site.muteLabel}</button>
       {voice.isListening&&<button onClick={()=>{voice.stopListening();setAnimation('idle');}}><MicOff size={16}/> Henti Mendengar</button>}
     </div>}
-    {site.showCamera&&<CameraWave onWave={()=>say(site.cameraWaveVoice,'waving')}
+    {site.showCamera&&<CameraWave onWave={()=>waveThenSpeak(site.cameraWaveVoice)}
       content={{title:site.cameraTitle,description:site.cameraDescription,start:site.cameraStart,stop:site.cameraStop,
         privacy:site.cameraPrivacy,ready:site.cameraReady,detected:site.cameraDetected,missing:site.cameraMissing}}/>}
     {(voice.error||feedback||saveError||cloudNote)&&<div className="notice-lines" aria-live="polite">
