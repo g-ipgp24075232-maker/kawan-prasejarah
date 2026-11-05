@@ -36,3 +36,55 @@
 .answer-audio-editor .recording-live{color:#c44b49;font-weight:900}
 .answer-audio-editor .answer-audio-note{font-weight:800;color:#4f8a58}
 .voice-recording-label{display:inline-block;margin-top:5px;font-size:11px;font-weight:800;color:#4f915b}
+
+
+/* Student-facing minimalist layout: chat + Mod Guru only. */
+.simple-app{background:linear-gradient(160deg,#f5f9ee 0%,#f9f8ed 52%,#f2f8e8 100%);min-height:100vh;overflow-x:hidden}
+.simple-header{height:76px;max-width:1080px;width:calc(100% - 42px);border-bottom:1px solid rgba(79,119,66,.13)}
+.simple-header .brand{cursor:default}
+.simple-header .brand-badge{width:44px;height:44px}
+.simple-header .brand-text strong{font-size:21px}
+.simple-header .brand-text small{font-size:10px;letter-spacing:.06em}
+.simple-main{position:relative;z-index:1;width:min(880px,calc(100% - 28px));margin:22px auto 0;display:flex;flex-direction:column;align-items:stretch}
+.simple-hero{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:13px 12px 0}
+.simple-intro{position:relative;z-index:2}
+.simple-eyebrow{font-size:11px;letter-spacing:.16em;font-weight:900;color:#70915f}
+.simple-intro h1{font-size:clamp(29px,5vw,42px);margin:7px 0 4px;color:#335736}
+.simple-intro h1 span{color:#d18444}
+.simple-intro p{font-size:15px;color:#6b7b68;margin:0}
+.simple-avatar-area{width:100%;display:flex;flex-direction:column;align-items:center;position:relative;margin:9px 0 0}
+.simple-bubble{position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none;width:min(400px,94%);min-height:65px;padding:11px 17px;margin:0 auto -20px;z-index:4;box-shadow:0 7px 25px rgba(66,95,53,.09);border:1px solid #e4ecd5}
+.simple-bubble .bubble-label{display:block;text-align:left}
+.simple-bubble p{font-size:14px;line-height:1.45;margin:3px 0 0;text-align:left;overflow-wrap:anywhere}
+.simple-bubble .bubble-tail{left:50%;right:auto;transform:translateX(-50%)}
+.simple-avatar{margin:0 auto;max-width:100%;min-height:0;position:relative;z-index:2}
+.simple-avatar svg{max-height:325px;width:100%;object-fit:contain}
+.simple-tap-note{font-size:12px;color:#82907b;margin:-1px 0 10px;position:relative;z-index:2}
+.simple-chat{width:100%;max-width:850px;margin:0 auto 18px;position:relative;z-index:3;border:1px solid #e3ebdb;box-shadow:0 9px 35px rgba(55,85,52,.08);border-radius:24px;background:#fff}
+.simple-chat-heading{gap:12px}
+.simple-chat-heading h2{font-size:22px;margin:0 0 3px}
+.simple-chat-heading p{margin:0;font-size:13px;color:#7b8673}
+.simple-chat .ask-controls{margin-top:15px}
+.simple-chat .question-input input{font-size:15px}
+.simple-speech-actions{flex-wrap:wrap;gap:8px}
+.simple-speech-actions button{font-size:12px}
+.simple-footer{text-align:center;font-size:11px;color:#899681;margin:4px auto 25px;position:relative;z-index:1}
+@media(max-width:650px){
+.simple-header{width:calc(100% - 24px);height:70px;gap:7px}
+.simple-header .brand-text strong{font-size:16px}
+.simple-header .brand-text small{font-size:9px}
+.simple-header .teacher-button{padding:10px 13px;font-size:13px}
+.simple-main{margin:10px auto 0;width:calc(100% - 18px)}
+.simple-hero{padding:10px 4px 0}
+.simple-intro p{font-size:13px}
+.simple-bubble{min-height:56px;margin-bottom:-15px}
+.simple-avatar svg{max-height:270px}
+.simple-chat{border-radius:19px;padding:18px 13px}
+.simple-chat-heading{align-items:flex-start;flex-wrap:wrap}
+.simple-chat-heading h2{font-size:19px}
+.simple-chat .live-status{margin-left:0;font-size:11px}
+.simple-chat .ask-controls{gap:7px}
+.simple-chat .question-input input{font-size:13px}
+.simple-chat .send-button{padding:10px}
+.simple-speech-actions button{font-size:11px}
+}
