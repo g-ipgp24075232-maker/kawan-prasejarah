@@ -49,7 +49,7 @@ export function useVoice() {
     stopSpeaking();
     if(muted){onEnd?.();return false;}
     const speakSynthetic=():boolean=>{
-      if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh memuat naik rakaman suara Bahasa Melayu Malaysia untuk jawapan ini.');onEnd?.();return false;}
+      if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh memuat naik rakaman suara dalam Mod Guru.');onEnd?.();return false;}
       const allVoices=window.speechSynthesis.getVoices();
       const candidates=orderedIndonesianVoices(allVoices,selectedVoice);
       // Browsers may initially expose no voices. Try their Indonesian default.
@@ -58,7 +58,7 @@ export function useVoice() {
         utterance.lang='id-ID';utterance.rate=rate;utterance.pitch=1.06;
         utterance.onstart=()=>{if(utteranceRef.current===utterance)setSpeaking(true);};
         utterance.onend=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);onEnd?.();}};
-        utterance.onerror=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);setError('Suara Bahasa Indonesia tidak dapat dimainkan. Cuba Chrome atau rakaman suara guru.');onEnd?.();}};
+        utterance.onerror=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);setError('Suara automatik tidak dapat dimainkan. Cuba pelayar Chrome atau gunakan rakaman suara guru.');onEnd?.();}};
         utteranceRef.current=utterance;setError('');
         try{window.speechSynthesis.speak(utterance);return true;}
         catch{utteranceRef.current=null;setError('Pelayar tidak dapat memainkan suara.');onEnd?.();return false;}
@@ -84,7 +84,7 @@ export function useVoice() {
           runNext();
         };
         utteranceRef.current=utterance;
-        setError(/^id(?:[-_]|$)/i.test(chosen.lang)?'':'Suara Bahasa Indonesia tidak tersedia; suara '+chosen.lang+' digunakan sebagai gantian. Sebutan mungkin berbeza.');
+        setError(/^id(?:[-_]|$)/i.test(chosen.lang)?'':'Suara pilihan tidak tersedia; suara '+chosen.lang+' digunakan sebagai gantian. Sebutan mungkin berbeza.');
         try{window.speechSynthesis.speak(utterance);}
         catch{if(utteranceRef.current===utterance){utteranceRef.current=null;runNext();}}
       };
