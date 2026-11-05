@@ -55,6 +55,21 @@ export function parseBackup(source: string): AppData {
     },
     eraDescriptions:Object.fromEntries(ERAS.map(era=>[era,text(e[era])?e[era]:defaults.eraDescriptions[era]])) as AvatarSettings['eraDescriptions']
   };
+  // Naik taraf ungkapan lama sahaja, tanpa menimpa sebarang suntingan guru.
+  const oldGreeting='Hai, kawan! Saya Aki. Jom kita teroka Zaman Prasejarah bersama-sama!';
+  if(settings.greeting===oldGreeting)settings.greeting=defaults.greeting;
+  if(settings.unknownAnswer==='Maaf, saya belum tahu jawapan itu. Boleh kamu cuba soalan lain?')settings.unknownAnswer=defaults.unknownAnswer;
+  const oldReactions:Record<keyof AvatarSettings['reactions'],string>={
+    head:'Hehe! Jangan usik rambut saya!',
+    belly:'Hahaha! Geli, geli!',
+    leftHand:'Hai! Saya gembira berjumpa dengan kamu!',
+    rightHand:'Hebat! Tepuk tangan untuk kamu!',
+    feet:'Wah! Saya boleh melompat!',
+    face:'Lihatlah wajah lucu saya!'
+  };
+  for(const key of Object.keys(oldReactions) as (keyof AvatarSettings['reactions'])[]){
+    if(settings.reactions[key]===oldReactions[key])settings.reactions[key]=defaults.reactions[key];
+  }
   const ids = questions.map(item=>item.id);
   if (new Set(ids).size !== ids.length) throw new Error('ID soalan berulang.');
   return {version:1,questions,quizzes,settings};

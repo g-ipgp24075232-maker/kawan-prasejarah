@@ -48,22 +48,24 @@ export function useVoice() {
     stopSpeaking();
     if(muted){onEnd?.();return false;}
     const speakSynthetic=():boolean=>{
-      if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh muat naik rakaman suara untuk jawapan ini.');onEnd?.();return false;}
+      if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh memuat naik rakaman suara Bahasa Melayu Malaysia untuk jawapan ini.');onEnd?.();return false;}
       const allVoices=window.speechSynthesis.getVoices();
-      const malay=allVoices.filter(v=>/^ms(?:-|_)/i.test(v.lang));
-      // Indonesian is a clearly labelled last resort when Malay is unavailable.
-      const indonesian=allVoices.filter(v=>/^id(?:-|_)/i.test(v.lang));
-      const candidates=malay.length?malay:indonesian;
-      const chosen=candidates.find(v=>v.voiceURI===selectedVoice)||
-        candidates.find(v=>/natural|neural|premium|enhanced/i.test(v.name))||candidates[0];
-      if(!chosen){setError('Tiada suara Melayu atau Indonesia pada peranti ini. Cikgu boleh tambah rakaman suara manusia di Mod Guru.');onEnd?.();return false;}
+      // Do not substitute Indonesian or non-Malaysian accents for school-standard Bahasa Melayu Malaysia.
+      const malaysian=allVoices.filter(v=>/^ms[-_]MY$/i.test(v.lang));
+      const likelyFemale=(name:string)=>/female|woman|perempuan|yasmin|siti|nurul|nora|amira|farah|sofia|aira|ayu|zara/i.test(name);
+      const chosen=malaysian.find(v=>v.voiceURI===selectedVoice)||
+        malaysian.find(v=>likelyFemale(v.name)&&/natural|neural|premium|enhanced/i.test(v.name))||
+        malaysian.find(v=>likelyFemale(v.name))||
+        malaysian.find(v=>/natural|neural|premium|enhanced/i.test(v.name))||
+        malaysian[0];
+      if(!chosen){setError('Suara Bahasa Melayu Malaysia tidak tersedia pada peranti ini. Cikgu boleh merakam atau memuat naik suara wanita dalam Mod Guru.');onEnd?.();return false;}
       const utterance=new SpeechSynthesisUtterance(text);
       utterance.lang=chosen.lang;utterance.voice=chosen;utterance.rate=rate;
-      utterance.pitch=1;
+      utterance.pitch=1.07;
       utterance.onstart=()=>{if(utteranceRef.current===utterance)setSpeaking(true);};
       utterance.onend=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);onEnd?.();}};
       utterance.onerror=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);setError('Suara tidak dapat dimainkan. Sila cuba rakaman suara guru.');onEnd?.();}};
-      utteranceRef.current=utterance;setError(malay.length?'':'Suara Bahasa Melayu tidak tersedia; suara Indonesia digunakan sebagai gantian. Sebutan mungkin berbeza.');
+      utteranceRef.current=utterance;setError('');
       window.speechSynthesis.speak(utterance);
       return true;
     };
@@ -103,5 +105,5 @@ export function useVoice() {
     recognizer.onend=()=>{setListening(false);recognitionRef.current=null;};
     try{recognizer.start();recognitionRef.current=recognizer;setListening(true);}catch{setListening(false);setError('Mikrofon tidak dapat diaktifkan.');}
   },[stopListening]);
-  return {isListening,isSpeaking,muted,setMuted,voices,error,setError,speak,listen,stopSpeaking,stopListening,stopAll,ttsSupported,speechRecognitionSupported,hasMalayVoice:voices.some(v=>/^ms(?:-|_)/i.test(v.lang)),hasIndonesianVoice:voices.some(v=>/^id(?:-|_)/i.test(v.lang))};
+  return {isListening,isSpeaking,muted,setMuted,voices,error,setError,speak,listen,stopSpeaking,stopListening,stopAll,ttsSupported,speechRecognitionSupported,hasMalayVoice:voices.some(v=>/^ms[-_]MY$/i.test(v.lang)),hasIndonesianVoice:false};
 }

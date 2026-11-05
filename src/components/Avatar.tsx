@@ -27,7 +27,7 @@ export default function Avatar({animation,settings,onInteract}:AvatarProps) {
     className={`prehistoric-avatar state-${animation}`}
     style={style}
     viewBox="0 0 420 545" role="img"
-    aria-label="Aki, manusia purba kartun interaktif dengan kepala, tangan, perut dan kaki yang boleh disentuh">
+    aria-label="Aki, watak perempuan prasejarah bergaya kartun dengan rambut panjang beranyam dan bahagian badan yang boleh disentuh">
     <defs>
       <linearGradient id="skinGradient" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#ffe3ad"/><stop offset="1" stopColor={settings.skinColor}/></linearGradient>
       <linearGradient id="tunicGradient" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#cc9a61"/><stop offset="1" stopColor={settings.clothingColor}/></linearGradient>
@@ -48,6 +48,14 @@ export default function Avatar({animation,settings,onInteract}:AvatarProps) {
             <path d="M230 478 Q255 473 268 487 Q293 500 277 508 Q255 516 230 497" fill="url(#skinGradient)" stroke="#985e43" strokeWidth="2.5"/></g>
           {part('legs',110,368,198,145)}
         </g>
+        <g className="avatar-long-hair" aria-hidden="true">
+          <path d="M125 111 Q98 147 99 211 Q83 274 98 346 Q99 377 115 394 Q147 378 151 337 L157 197Z"
+            fill="url(#hairGradient)" stroke="#543727" strokeWidth="3"/>
+          <path d="M283 103 Q325 151 313 215 Q337 295 311 390 Q283 384 271 339 L262 179Z"
+            fill="url(#hairGradient)" stroke="#543727" strokeWidth="3"/>
+          <path d="M113 158 Q94 244 111 351 M299 157 Q324 259 300 352"
+            fill="none" stroke="#bd8257" strokeWidth="6" strokeLinecap="round" opacity=".38"/>
+        </g>
         <g className="avatar-left-arm" onClick={e=>{e.stopPropagation();onInteract('leftHand');}} onKeyDown={e=>activate(e,'leftHand')} tabIndex={0} role="button" aria-label="Sentuh tangan kiri">
           <path d="M149 275 Q113 268 97 309 Q79 349 70 365" fill="none" stroke="url(#skinGradient)" strokeWidth="37" strokeLinecap="round"/>
           <path d="M70 360 Q43 357 48 380 Q55 394 70 393 Q82 405 89 388 Q96 374 84 360" fill="url(#skinGradient)" stroke="#986143" strokeWidth="2.5"/>
@@ -60,6 +68,11 @@ export default function Avatar({animation,settings,onInteract}:AvatarProps) {
         </g>
         <g className="avatar-torso" onClick={e=>{e.stopPropagation();onInteract('belly');}} onKeyDown={e=>activate(e,'belly')} tabIndex={0} role="button" aria-label="Sentuh perut">
           <path d="M154 252 Q208 224 271 254 Q303 315 284 394 Q216 427 145 394 Q124 331 154 252Z" fill="url(#tunicGradient)" stroke="#8e5835" strokeWidth="3"/>
+          <path d="M150 349 Q212 369 274 351 L295 422 L277 437 L264 430 L247 444 L228 434 L207 447 L188 434 L168 444 L150 430 L133 438Z"
+            fill="url(#tunicGradient)" stroke="#88583e" strokeWidth="3"/>
+          <path d="M154 359 Q210 378 273 357" fill="none" stroke="#f5d1a2" strokeWidth="7" strokeLinecap="round"/>
+          <path d="M160 383 L170 410 M197 389 L196 419 M232 384 L238 420 M265 381 L270 412"
+            stroke="#f8d8a6" strokeWidth="3" strokeLinecap="round" opacity=".65"/>
           <path d="M151 263 L208 302 266 257" fill="none" stroke="#efc48d" strokeWidth="5" opacity=".8"/>
           <path d="M155 358 Q201 378 270 359" fill="none" stroke="#85512f" strokeWidth="3" strokeDasharray="7 10"/>
           <path d="M145 384 Q160 376 174 389 Q199 379 215 395 Q243 378 262 392 L281 383 285 400 Q212 436 145 404Z" fill="#8d603e"/>
@@ -92,6 +105,24 @@ export default function Avatar({animation,settings,onInteract}:AvatarProps) {
               <ellipse cx="213" cy="231" rx="11" ry="4" fill="#e8898c"/>
             </g>
             <rect x="152" y="146" width="117" height="98" rx="32" fill="transparent" pointerEvents="all"/>
+          </g>
+          <g className="avatar-braids" aria-hidden="true">
+            <path d="M123 159 Q110 217 125 264 Q111 293 125 321" fill="none" stroke="#633d2e" strokeWidth="21" strokeLinecap="round"/>
+            <path d="M294 157 Q312 212 295 261 Q313 291 298 320" fill="none" stroke="#633d2e" strokeWidth="21" strokeLinecap="round"/>
+            <path d="M119 194 L129 212 L115 228 L131 249 L116 272 L133 296 L123 316"
+              fill="none" stroke="#a86c48" strokeWidth="6" opacity=".65" strokeLinecap="round"/>
+            <path d="M299 192 L289 210 L304 228 L289 247 L305 271 L288 293 L299 316"
+              fill="none" stroke="#a86c48" strokeWidth="6" opacity=".65" strokeLinecap="round"/>
+            <rect x="113" y="316" width="24" height="11" rx="5" fill="#ecb27b" stroke="#845b42" strokeWidth="2"/>
+            <rect x="287" y="315" width="24" height="11" rx="5" fill="#ecb27b" stroke="#845b42" strokeWidth="2"/>
+          </g>
+          <g fill="none" stroke="#593a2c" strokeWidth="2.8" strokeLinecap="round" aria-hidden="true">
+            <path d="M162 162 L154 156 M257 161 L266 156"/>
+          </g>
+          <g transform="translate(274 91)" aria-hidden="true">
+            <circle r="8" fill="#f1c88b" stroke="#ae7652" strokeWidth="2"/>
+            <circle r="3" fill="#fff3dc"/>
+            <circle cx="10" cy="-4" r="4" fill="#e9b379"/>
           </g>
           <path d="M131 113 Q148 129 165 112 Q188 123 198 100 Q216 127 242 103 Q270 123 290 110" fill="none" stroke="#4c2d21" strokeWidth="11" strokeLinecap="round"/>
           {part('head',111,38,200,231)}

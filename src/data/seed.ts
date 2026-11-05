@@ -71,15 +71,15 @@ export const initialData: AppData = {
   quizzes: seedQuizzes,
   settings: {
     name: 'Aki',
-    greeting: 'Hai, kawan! Saya Aki. Jom kita teroka Zaman Prasejarah bersama-sama!',
-    unknownAnswer: 'Maaf, saya belum tahu jawapan itu. Boleh kamu cuba soalan lain?',
+    greeting: 'Salam sejahtera, murid-murid. Saya Aki. Mari kita mempelajari Zaman Prasejarah bersama-sama.',
+    unknownAnswer: 'Maaf, saya belum mempunyai jawapan yang tepat. Sila kemukakan soalan yang lain.',
     reactions: {
-      head: 'Hehe! Jangan usik rambut saya!',
-      belly: 'Hahaha! Geli, geli!',
-      leftHand: 'Hai! Saya gembira berjumpa dengan kamu!',
-      rightHand: 'Hebat! Tepuk tangan untuk kamu!',
-      feet: 'Wah! Saya boleh melompat!',
-      face: 'Lihatlah wajah lucu saya!'
+      head: 'Hai! Terima kasih kerana menyapa saya!',
+      belly: 'Ha ha! Saya berasa geli apabila disentuh.',
+      leftHand: 'Salam sejahtera! Saya gembira dapat bertemu dengan kamu.',
+      rightHand: 'Syabas! Mari kita berikan tepukan.',
+      feet: 'Lihatlah! Saya boleh melompat dengan gembira.',
+      face: 'Adakah kamu suka melihat ekspresi wajah saya?'
     },
     speechRate: 0.92,
     preferredVoice: '',
@@ -88,7 +88,7 @@ export const initialData: AppData = {
     backgroundImage: '',
     skinColor: '#edb782',
     hairColor: '#553325',
-    clothingColor: '#a56d40',
+    clothingColor: '#ad7957',
     fullArtwork: '',
     layers: {},
     eraDescriptions: {

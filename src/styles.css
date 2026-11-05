@@ -110,3 +110,8 @@
 .camera-message{font-size:12px;font-weight:700;color:#52714d;margin:0}
 .camera-wave-card small{font-size:10px;line-height:1.55;color:#879184}
 @media(max-width:650px){.camera-wave-card{padding:12px}.camera-wave-heading strong{font-size:13px}.camera-wave-heading span{font-size:11px}}
+
+/* Rambut beranyam dan pakaian labuh Aki (watak perempuan). */
+.avatar-long-hair{transform-origin:210px 145px;animation:aki-hair-sway 5.5s ease-in-out infinite alternate;pointer-events:none}
+.avatar-braids{pointer-events:none}
+@keyframes aki-hair-sway{from{transform:rotate(-1deg)}to{transform:rotate(1.4deg)}}
