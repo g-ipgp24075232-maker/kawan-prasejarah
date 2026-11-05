@@ -7,6 +7,7 @@ import TeacherPanel from './components/TeacherPanel';
 import { initialData } from './data/seed';
 import { fetchPublished, cloudAvailable, subscribePublished } from './lib/cloud';
 import { matchQuestion } from './lib/matcher';
+import { resolveDialogue, type DialogueSource } from './lib/dialogue';
 import { getStoredData, persistData } from './lib/storage';
 import { useVoice } from './lib/speech';
 import { voiceGender,isIndonesianVoice } from './lib/voiceChoice';
@@ -18,7 +19,7 @@ export default function App(){
   const [saveError,setSaveError]=useState('');
   const [input,setInput]=useState('');
   const [currentQuestion,setCurrentQuestion]=useState('');
-  const [reply,setReply]=useState(initialData.settings.greeting);
+  const [reply,setReply]=useState(()=>data.settings.greeting);
   const [replyRecording,setReplyRecording]=useState<string|undefined>();
   const [animation,setAnimation]=useState<Animation>('idle');
   const [feedback,setFeedback]=useState('');
@@ -27,6 +28,8 @@ export default function App(){
   const voice=useVoice();
   const timers=useRef<ReturnType<typeof setTimeout>[]>([]);
   const busyToken=useRef(0);
+  const replySource=useRef<DialogueSource>({kind:'greeting'});
+  const replyText=useRef(data.settings.greeting);
   const dataSettings=data.settings;
   const site=data.site;
   useEffect(()=>{
@@ -34,15 +37,16 @@ export default function App(){
     let ignore=false;
     const unsubscribe=subscribePublished(published=>{if(!ignore){setData(published);setCloudNote('Guru telah menerbitkan kandungan baharu secara langsung.');}});
     fetchPublished().then(published=>{
-      if(!ignore&&published){setData(published);setReply(published.settings.greeting);setCloudNote('Kandungan terbitan guru berjaya dimuatkan.');}
+      if(!ignore&&published){setData(published);replySource.current={kind:'greeting'};replyText.current=published.settings.greeting;setReply(published.settings.greeting);setCloudNote('Kandungan terbitan guru berjaya dimuatkan.');}
     }).catch(()=>{if(!ignore)setCloudNote('Kandungan setempat digunakan. Sambungan dalam talian belum tersedia.');});
     return ()=>{ignore=true;unsubscribe();};
   },[]);
   useEffect(()=>()=>{timers.current.forEach(clearTimeout);voice.stopAll();},[]); // teardown when leaving page
   const later=useCallback((fn:()=>void,ms:number)=>{const t=setTimeout(fn,ms);timers.current.push(t);},[]);
   const safeIdle=useCallback((token:number)=>{if(busyToken.current===token)setAnimation('idle');},[]);
-  const say=useCallback((text:string,emotion:Animation='talking',recording?:string)=>{
+  const say=useCallback((text:string,emotion:Animation='talking',recording?:string,source:DialogueSource={kind:'other'})=>{
     busyToken.current++;const token=busyToken.current;
+    replySource.current=source;replyText.current=text;
     voice.stopSpeaking();setAnimation(emotion);setReply(text);setReplyRecording(recording);setFeedback('');
     // Speech synthesis may not exist: still provide reading and a visible reaction.
     const started=voice.speak(text,dataSettings.speechRate,dataSettings.preferredVoice,()=>safeIdle(token),recording);
@@ -51,32 +55,45 @@ export default function App(){
   const ask=useCallback((value:string)=>{
     const clean=value.trim();if(!clean)return;
     voice.stopAll();busyToken.current++;const token=busyToken.current;
-    setInput('');setCurrentQuestion(clean);setAnimation('thinking');setReply('Sebentar, saya sedang memikirkan jawapannya.');setFeedback('');
+    replySource.current={kind:'other'};
+    replyText.current='Sebentar, saya sedang memikirkan jawapannya.';
+    setInput('');setCurrentQuestion(clean);setAnimation('thinking');setReply(replyText.current);setFeedback('');
     later(()=>{
       if(busyToken.current!==token)return;
       const match=matchQuestion(clean,data.questions);
       if(match.ambiguous.length){
         setFeedback('Sila nyatakan nama zaman atau kemukakan soalan yang lebih khusus.');
         say('Saya menemui beberapa soalan yang hampir sama. Sila kemukakan soalan yang lebih khusus.','confused');
-      }else if(match.item){say(match.item.answerMS,'talking',match.item.audioMS);}
-      else {say(dataSettings.unknownAnswer,'confused');}
+      }else if(match.item){say(match.item.answerMS,'talking',match.item.audioMS,{kind:'answer',id:match.item.id});}
+      else {say(dataSettings.unknownAnswer,'confused',undefined,{kind:'unknown'});}
     },550);
   },[data.questions,dataSettings.unknownAnswer,later,say,voice]);
-  const waveThenSpeak=useCallback((message:string)=>{
+  const waveThenSpeak=useCallback((message:string,source:DialogueSource={kind:'other'})=>{
     // Show the waving photograph visibly before starting speech.
     voice.stopSpeaking();
     busyToken.current++;
     const token=busyToken.current;
     setAnimation('waving');
-    later(()=>{if(busyToken.current===token)say(message,'talking');},4000);
-  },[voice,later,say]);
+    later(()=>{if(busyToken.current!==token)return;
+      const current=resolveDialogue(source,data)??{text:message};
+      say(current.text,'talking',current.recording,source);
+    },4000);
+  },[voice,later,say,data]);
   const handleTouch=useCallback((area:TouchArea)=>{
     const reacts:Record<TouchArea,Animation>={head:'happy',belly:'laughing',leftHand:'waving',rightHand:'happy',feet:'jumping',face:'surprised'};
-    if(area==='leftHand'){waveThenSpeak(dataSettings.reactions[area]);return;}
-    say(dataSettings.reactions[area],reacts[area]);
+    if(area==='leftHand'){waveThenSpeak(dataSettings.reactions[area],{kind:'reaction',area});return;}
+    say(dataSettings.reactions[area],reacts[area],undefined,{kind:'reaction',area});
   },[dataSettings.reactions,say,waveThenSpeak]);
   const handleUpdate=useCallback((next:AppData)=>{
-    if(data.settings.greeting!==next.settings.greeting){setReply(current=>current===data.settings.greeting?next.settings.greeting:current);}
+    // Match the visible bubble to its original source so edits show immediately,
+    // without resetting the pupil's currently displayed question to a greeting.
+    const changedGreeting=data.settings.greeting!==next.settings.greeting;
+    const shown=resolveDialogue(replySource.current,next);
+    if(shown && (shown.text!==replyText.current || changedGreeting&&replySource.current.kind==='greeting')){
+      replyText.current=shown.text;
+      setReply(shown.text);
+      setReplyRecording(shown.recording);
+    }
     setData(next);
     try{persistData(next);setSaveError('');}
     catch{setSaveError('Storan pelayar telah penuh. Eksport JSON dan kurangkan saiz imej; perubahan terbaru belum disimpan secara kekal.');}
@@ -137,13 +154,13 @@ export default function App(){
       <button className="send-button" type="submit" disabled={!input.trim()}><span>{site.sendLabel}</span><Send size={19}/></button>
     </form>
     {site.showVoiceControls&&<div className="speech-actions simple-speech-actions">
-      <button onClick={()=>say(dataSettings.greeting,'talking')}><Volume2 size={16}/> {site.voiceTestLabel}</button>
+      <button onClick={()=>say(dataSettings.greeting,'talking',undefined,{kind:'greeting'})}><Volume2 size={16}/> {site.voiceTestLabel}</button>
       <button onClick={()=>say(reply,'talking',replyRecording)}><Volume2 size={16}/> {site.repeatLabel}</button>
       <button onClick={stopAudio}><Pause size={16}/> {site.stopLabel}</button>
       <button onClick={()=>voice.setMuted(v=>!v)}>{voice.muted?<VolumeX size={16}/>:<Volume2 size={16}/>} {voice.muted?site.unmuteLabel:site.muteLabel}</button>
       {voice.isListening&&<button onClick={()=>{voice.stopListening();setAnimation('idle');}}><MicOff size={16}/> Henti Mendengar</button>}
     </div>}
-    {site.showCamera&&<CameraWave onWave={()=>waveThenSpeak(site.cameraWaveVoice)}
+    {site.showCamera&&<CameraWave onWave={()=>waveThenSpeak(site.cameraWaveVoice,{kind:'camera'})}
       content={{title:site.cameraTitle,description:site.cameraDescription,start:site.cameraStart,stop:site.cameraStop,
         privacy:site.cameraPrivacy,ready:site.cameraReady,detected:site.cameraDetected,missing:site.cameraMissing}}/>}
     {(voice.error||feedback||saveError||cloudNote)&&<div className="notice-lines" aria-live="polite">
@@ -167,7 +184,9 @@ export default function App(){
     <main className="simple-main">{site.chatFirst?<>{chat}{hero}</>:<>{hero}{chat}</>}</main>
     <footer className="simple-footer">{site.footerLabel}</footer>
     {teacherOpen&&<TeacherPanel data={data} onChange={handleUpdate} onClose={()=>setTeacherOpen(false)}
-      onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}}
+      onSay={(message,audio)=>{setTeacherOpen(false);
+        const source:DialogueSource=message===dataSettings.greeting?{kind:'greeting'}:{kind:'other'};
+        say(message,'talking',audio,source);}}
       onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}}
       onPreview={()=>setTeacherOpen(false)}
       onTestWave={()=>{
