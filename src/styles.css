@@ -267,3 +267,35 @@
 .pose-editor-message{font-size:12px;font-weight:800;padding:11px;border-radius:10px;background:#fff4d9;color:#79582e}
 @media(max-width:830px){.pose-upload-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pose-import{flex-wrap:wrap}}
 @media(max-width:440px){.pose-upload-grid{grid-template-columns:1fr}.pose-blink-grid{grid-template-columns:1fr}}
+
+
+/* Natural 220-ms blink: ~80 ms to close, 45 ms hold, ~95 ms to open.
+   The existing photo remains in place throughout a blink. */
+.custom-pose-avatar .pose-eyelid{
+  box-sizing:border-box;
+  border:0;
+  border-bottom:2px solid #6f4031;
+  border-radius:50% 50% 38% 38%;
+  box-shadow:inset 0 -2px 0 rgba(121,69,50,.45);
+  transform-origin:50% 8%;
+  transform:translate(-50%,-50%) scaleY(0);
+  animation:aki-natural-eyelid 220ms both;
+}
+.custom-pose-avatar .pose-blink-image{
+  position:absolute;inset:0;z-index:2;
+  animation:aki-natural-blink-image 220ms both;
+}
+@keyframes aki-natural-eyelid{
+  0%{transform:translate(-50%,-50%) scaleY(.05);opacity:0}
+  36%{transform:translate(-50%,-50%) scaleY(1);opacity:1}
+  56%{transform:translate(-50%,-50%) scaleY(1);opacity:1}
+  100%{transform:translate(-50%,-50%) scaleY(.05);opacity:0}
+}
+@keyframes aki-natural-blink-image{
+  0%{opacity:0}
+  36%,56%{opacity:1}
+  100%{opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .custom-pose-avatar .pose-eyelid,.custom-pose-avatar .pose-blink-image{animation:none;opacity:.45}
+}
