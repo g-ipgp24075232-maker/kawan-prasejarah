@@ -8,6 +8,7 @@ import { fetchPublished, cloudAvailable, subscribePublished } from './lib/cloud'
 import { matchQuestion } from './lib/matcher';
 import { getStoredData, persistData } from './lib/storage';
 import { useVoice } from './lib/speech';
+import { voiceGender } from './lib/voiceChoice';
 import type { Animation, AppData } from './types';
 
 type TouchArea='head'|'belly'|'leftHand'|'rightHand'|'feet'|'face';
@@ -111,6 +112,6 @@ export default function App(){
       </section>
     </main>
     <footer className="simple-footer">KAWAN PRASEJARAH · Sejarah Tahun 4</footer>
-    {teacherOpen&&<TeacherPanel data={data} onChange={handleUpdate} onClose={()=>setTeacherOpen(false)} onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}} onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}} voiceNames={voice.voices.filter(v=>/^ms[-_]MY$/i.test(v.lang)).map(v=>({value:v.voiceURI,label:v.name+' ('+v.lang+')'}))}/>}
+    {teacherOpen&&<TeacherPanel data={data} onChange={handleUpdate} onClose={()=>setTeacherOpen(false)} onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}} onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}} voiceNames={voice.voices.filter(v=>voiceGender(v.name)!=='male').map(v=>({value:v.voiceURI,label:(voiceGender(v.name)==='female'?'Suara wanita • ':'Suara belum dikenal pasti • ')+v.name+' ('+v.lang+')'}))}/>}
   </div>;
 }

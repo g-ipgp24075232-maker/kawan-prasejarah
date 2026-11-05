@@ -106,3 +106,7 @@ Aki **boleh bercakap kuat**, bukan hanya memaparkan teks.
 ## Bahasa Melayu Malaysia dan rupa Aki
 
 Aki menggunakan ungkapan baku Bahasa Melayu Malaysia, dengan avatar perempuan 2D berambut panjang dan beranyam. Suara automatik memilih `ms-MY` dan cuba mengutamakan suara wanita apabila nama suara membolehkan pengesanan. Jika tiada suara `ms-MY`, guru boleh memuat naik rakaman perempuan melalui **Mod Guru → Bank Soalan**; sistem tidak menggantikan suara Malaysia dengan bahasa Indonesia. Rakaman guru diutamakan dan kekal berfungsi. Ungkapan lalai lama dalam storan dikemas kini tanpa menimpa perubahan tersuai guru. Jika guru memuat naik karya avatar tersuai, karya tersebut masih menggantikan lakaran avatar lalai.
+
+## Pemilihan suara wanita
+
+Aki hanya memilih suara wanita yang dapat dikenal pasti melalui nama suara pelayar. Bahasa Melayu Malaysia (`ms-MY`) sentiasa diutamakan. Jika tiada suara wanita Malaysia, suara wanita bahasa lain boleh digunakan dengan **amaran tentang sebutan**; teks jawapan tetap dalam Bahasa Melayu Malaysia. Tiada suara lelaki dipilih secara automatik. Guru boleh memilih dan mendengar contoh suara tanpa label jantina melalui **Mod Guru → Avatar → Suara Bahasa Melayu Malaysia → Uji Ucapan**, atau memuat naik rakaman wanita untuk setiap jawapan di Bank Soalan. API pelayar tidak menyediakan metadata jantina, jadi suara yang tiada label perlu disahkan dengan pendengaran.

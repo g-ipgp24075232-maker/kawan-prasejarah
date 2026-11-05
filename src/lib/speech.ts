@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { validAnswerAudio } from './audio';
+import { orderedFemaleVoices,voiceAvailabilityMessage } from './voiceChoice';
 
 interface RecognitionResult { isFinal:boolean; 0:{transcript:string}; }
 interface RecognitionEvent { results:ArrayLike<RecognitionResult>; resultIndex:number; }
@@ -50,63 +51,37 @@ export function useVoice() {
     const speakSynthetic=():boolean=>{
       if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh memuat naik rakaman suara Bahasa Melayu Malaysia untuk jawapan ini.');onEnd?.();return false;}
       const allVoices=window.speechSynthesis.getVoices();
-      const malaysian=allVoices.filter(v=>/^ms[-_]MY$/i.test(v.lang));
-      const likelyFemale=(name:string)=>/female|woman|perempuan|yasmin|siti|nurul|nora|amira|farah|sofia|aira|ayu|zara/i.test(name);
-      const preferred=malaysian.find(v=>v.voiceURI===selectedVoice)||
-        malaysian.find(v=>likelyFemale(v.name)&&/natural|neural|premium|enhanced/i.test(v.name))||
-        malaysian.find(v=>likelyFemale(v.name))||
-        malaysian.find(v=>/natural|neural|premium|enhanced/i.test(v.name))||
-        malaysian[0];
-
-      // Crucial: never silently return without speaking when ms-MY is not installed.
-      // The answer text always remains Bahasa Melayu Malaysia; the fallback voice
-      // may have a different accent, which must be clearly disclosed.
-      const fallback=allVoices.find(v=>v.default)||allVoices[0];
-      let triedFallback=false;
-      const makeUtterance=(voiceChoice:SpeechSynthesisVoice|undefined):SpeechSynthesisUtterance=>{
+      const candidates=orderedFemaleVoices(allVoices,selectedVoice);
+      if(!candidates.length){
+        setError('Tiada suara wanita yang dikenal pasti pada peranti ini. Dalam Mod Guru → Avatar, pilih dan uji suara yang tersedia atau muat naik rakaman wanita Bahasa Melayu Malaysia pada Bank Soalan. Aki tidak akan memilih suara lelaki secara automatik.');
+        onEnd?.();return false;
+      }
+      let index=0;
+      const runNext=()=>{
+        const chosen=candidates[index++];
+        if(!chosen){
+          setSpeaking(false);
+          setError('Suara wanita tidak dapat dimainkan. Cuba pilihan suara lain dalam Mod Guru atau gunakan rakaman wanita.');
+          onEnd?.();return;
+        }
         const utterance=new SpeechSynthesisUtterance(text);
-        if(voiceChoice){utterance.voice=voiceChoice;utterance.lang=voiceChoice.lang;}
-        else utterance.lang='ms-MY'; // Let browser resolve a default voice even when getVoices() is empty.
-        utterance.rate=rate;utterance.pitch=1.06;
+        utterance.voice=chosen;
+        utterance.lang=chosen.lang;
+        utterance.rate=rate;
+        utterance.pitch=1.06;
         utterance.onstart=()=>{if(utteranceRef.current===utterance)setSpeaking(true);};
         utterance.onend=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);onEnd?.();}};
-        utterance.onerror=(event)=>{
+        utterance.onerror=()=>{
           if(utteranceRef.current!==utterance)return;
           utteranceRef.current=null;setSpeaking(false);
-          if(!triedFallback && preferred && fallback && fallback.voiceURI!==preferred.voiceURI){
-            triedFallback=true;
-            setError('Suara Malaysia gagal dimainkan. Suara lalai peranti digunakan; sebutannya mungkin berbeza.');
-            run(fallback);
-          } else if(!triedFallback && !preferred && !voiceChoice && fallback){
-            triedFallback=true;
-            setError('Suara Malaysia tidak tersedia. Mencuba suara lalai peranti.');
-            run(fallback);
-          } else {
-            const description=event.error||'tidak diketahui';
-            setError('Audio tidak dapat dimainkan ('+description+'). Pastikan peranti tidak disenyapkan, atau gunakan rakaman suara dalam Mod Guru.');
-            onEnd?.();
-          }
+          runNext();
         };
-        return utterance;
-      };
-      const run=(voiceChoice:SpeechSynthesisVoice|undefined)=>{
-        const utterance=makeUtterance(voiceChoice);
         utteranceRef.current=utterance;
+        setError(voiceAvailabilityMessage(chosen));
         try{window.speechSynthesis.speak(utterance);}
-        catch{
-          if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);
-            setError('Pelayar tidak dapat memainkan suara. Semak audio peranti atau gunakan rakaman guru.');onEnd?.();}
-        }
+        catch{if(utteranceRef.current===utterance){utteranceRef.current=null;runNext();}}
       };
-      if(preferred){
-        setError('');
-        run(preferred);
-      } else {
-        setError(fallback
-          ?'Suara wanita Bahasa Melayu Malaysia tidak tersedia. Suara lalai peranti digunakan; sebutan mungkin tidak tepat. Cikgu boleh memuat naik rakaman ms-MY dalam Mod Guru.'
-          :'Suara ms-MY belum disenaraikan oleh pelayar. Mencuba suara lalai; jika tiada bunyi, muat naik rakaman ms-MY dalam Mod Guru.');
-        run(fallback);
-      }
+      runNext();
       return true;
     };
     if(validAnswerAudio(recordedAudio)){
