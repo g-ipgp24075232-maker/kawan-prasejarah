@@ -99,6 +99,7 @@ export default function App(){
           <button className="send-button" type="submit" disabled={!input.trim()}><span>Hantar Soalan</span><Send size={19}/></button>
         </form>
         <div className="speech-actions simple-speech-actions">
+          <button onClick={()=>say(dataSettings.greeting,'talking')}><Volume2 size={16}/> Uji Suara Aki</button>
           <button onClick={()=>say(reply,'talking',replyRecording)}><Volume2 size={16}/> Ulang Jawapan</button>
           <button onClick={stopAudio}><Pause size={16}/> Henti Bercakap</button>
           <button onClick={()=>voice.setMuted(v=>!v)}>{voice.muted?<VolumeX size={16}/>:<Volume2 size={16}/>} {voice.muted?'Buka Audio':'Senyapkan'}</button>

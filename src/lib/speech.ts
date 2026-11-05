@@ -50,23 +50,63 @@ export function useVoice() {
     const speakSynthetic=():boolean=>{
       if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh memuat naik rakaman suara Bahasa Melayu Malaysia untuk jawapan ini.');onEnd?.();return false;}
       const allVoices=window.speechSynthesis.getVoices();
-      // Do not substitute Indonesian or non-Malaysian accents for school-standard Bahasa Melayu Malaysia.
       const malaysian=allVoices.filter(v=>/^ms[-_]MY$/i.test(v.lang));
       const likelyFemale=(name:string)=>/female|woman|perempuan|yasmin|siti|nurul|nora|amira|farah|sofia|aira|ayu|zara/i.test(name);
-      const chosen=malaysian.find(v=>v.voiceURI===selectedVoice)||
+      const preferred=malaysian.find(v=>v.voiceURI===selectedVoice)||
         malaysian.find(v=>likelyFemale(v.name)&&/natural|neural|premium|enhanced/i.test(v.name))||
         malaysian.find(v=>likelyFemale(v.name))||
         malaysian.find(v=>/natural|neural|premium|enhanced/i.test(v.name))||
         malaysian[0];
-      if(!chosen){setError('Suara Bahasa Melayu Malaysia tidak tersedia pada peranti ini. Cikgu boleh merakam atau memuat naik suara wanita dalam Mod Guru.');onEnd?.();return false;}
-      const utterance=new SpeechSynthesisUtterance(text);
-      utterance.lang=chosen.lang;utterance.voice=chosen;utterance.rate=rate;
-      utterance.pitch=1.07;
-      utterance.onstart=()=>{if(utteranceRef.current===utterance)setSpeaking(true);};
-      utterance.onend=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);onEnd?.();}};
-      utterance.onerror=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);setError('Suara tidak dapat dimainkan. Sila cuba rakaman suara guru.');onEnd?.();}};
-      utteranceRef.current=utterance;setError('');
-      window.speechSynthesis.speak(utterance);
+
+      // Crucial: never silently return without speaking when ms-MY is not installed.
+      // The answer text always remains Bahasa Melayu Malaysia; the fallback voice
+      // may have a different accent, which must be clearly disclosed.
+      const fallback=allVoices.find(v=>v.default)||allVoices[0];
+      let triedFallback=false;
+      const makeUtterance=(voiceChoice:SpeechSynthesisVoice|undefined):SpeechSynthesisUtterance=>{
+        const utterance=new SpeechSynthesisUtterance(text);
+        if(voiceChoice){utterance.voice=voiceChoice;utterance.lang=voiceChoice.lang;}
+        else utterance.lang='ms-MY'; // Let browser resolve a default voice even when getVoices() is empty.
+        utterance.rate=rate;utterance.pitch=1.06;
+        utterance.onstart=()=>{if(utteranceRef.current===utterance)setSpeaking(true);};
+        utterance.onend=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);onEnd?.();}};
+        utterance.onerror=(event)=>{
+          if(utteranceRef.current!==utterance)return;
+          utteranceRef.current=null;setSpeaking(false);
+          if(!triedFallback && preferred && fallback && fallback.voiceURI!==preferred.voiceURI){
+            triedFallback=true;
+            setError('Suara Malaysia gagal dimainkan. Suara lalai peranti digunakan; sebutannya mungkin berbeza.');
+            run(fallback);
+          } else if(!triedFallback && !preferred && !voiceChoice && fallback){
+            triedFallback=true;
+            setError('Suara Malaysia tidak tersedia. Mencuba suara lalai peranti.');
+            run(fallback);
+          } else {
+            const description=event.error||'tidak diketahui';
+            setError('Audio tidak dapat dimainkan ('+description+'). Pastikan peranti tidak disenyapkan, atau gunakan rakaman suara dalam Mod Guru.');
+            onEnd?.();
+          }
+        };
+        return utterance;
+      };
+      const run=(voiceChoice:SpeechSynthesisVoice|undefined)=>{
+        const utterance=makeUtterance(voiceChoice);
+        utteranceRef.current=utterance;
+        try{window.speechSynthesis.speak(utterance);}
+        catch{
+          if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);
+            setError('Pelayar tidak dapat memainkan suara. Semak audio peranti atau gunakan rakaman guru.');onEnd?.();}
+        }
+      };
+      if(preferred){
+        setError('');
+        run(preferred);
+      } else {
+        setError(fallback
+          ?'Suara wanita Bahasa Melayu Malaysia tidak tersedia. Suara lalai peranti digunakan; sebutan mungkin tidak tepat. Cikgu boleh memuat naik rakaman ms-MY dalam Mod Guru.'
+          :'Suara ms-MY belum disenaraikan oleh pelayar. Mencuba suara lalai; jika tiada bunyi, muat naik rakaman ms-MY dalam Mod Guru.');
+        run(fallback);
+      }
       return true;
     };
     if(validAnswerAudio(recordedAudio)){
