@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, CircleHelp, HelpCircle, Mic, MicOff, Pause, Send, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import Avatar from './components/Avatar';
+import CameraWave from './components/CameraWave';
 import TeacherPanel from './components/TeacherPanel';
 import { initialData } from './data/seed';
 import { fetchPublished, cloudAvailable, subscribePublished } from './lib/cloud';
@@ -103,6 +104,7 @@ export default function App(){
           <button onClick={()=>voice.setMuted(v=>!v)}>{voice.muted?<VolumeX size={16}/>:<Volume2 size={16}/>} {voice.muted?'Buka Audio':'Senyapkan'}</button>
           {voice.isListening&&<button onClick={()=>{voice.stopListening();setAnimation('idle');}}><MicOff size={16}/> Henti Mendengar</button>}
         </div>
+        <CameraWave onWave={()=>say('Hai, kawan! Saya nampak kamu melambai! Hai!','waving')}/>
         {(voice.error||feedback||saveError||cloudNote)&&<div className="notice-lines" aria-live="polite">{voice.error&&<p><HelpCircle size={15}/> {voice.error}</p>}{feedback&&<p><CircleHelp size={15}/> {feedback}</p>}{saveError&&<p><HelpCircle size={15}/> {saveError}</p>}{cloudNote&&<p><Check size={15}/> {cloudNote}</p>}</div>}
         {!voice.speechRecognitionSupported&&<p className="compatibility-note">Mikrofon tidak disokong pada pelayar ini. Kamu masih boleh menaip soalan.</p>}
       </section>
