@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Check, CircleHelp, HelpCircle, Mic, MicOff, Pause, Send, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import Avatar from './components/Avatar';
 import CameraWave from './components/CameraWave';
@@ -9,7 +10,7 @@ import { matchQuestion } from './lib/matcher';
 import { getStoredData, persistData } from './lib/storage';
 import { useVoice } from './lib/speech';
 import { voiceGender,isIndonesianVoice } from './lib/voiceChoice';
-import type { Animation, AppData } from './types';
+import type { Animation, AppData, SiteArt } from './types';
 
 type TouchArea='head'|'belly'|'leftHand'|'rightHand'|'feet'|'face';
 export default function App(){
@@ -27,6 +28,7 @@ export default function App(){
   const timers=useRef<ReturnType<typeof setTimeout>[]>([]);
   const busyToken=useRef(0);
   const dataSettings=data.settings;
+  const site=data.site;
   useEffect(()=>{
     if(!cloudAvailable || getStoredData())return;
     let ignore=false;
@@ -77,41 +79,81 @@ export default function App(){
     voice.listen(value=>{ask(value);});
   };
   const stopAudio=()=>{voice.stopSpeaking();busyToken.current++;setAnimation('idle');};
-  return <div className="app-shell simple-app" style={dataSettings.backgroundImage?{backgroundImage:'linear-gradient(180deg,rgba(250,253,242,.91),rgba(247,250,238,.91)),url("' + dataSettings.backgroundImage + '")',backgroundSize:'cover',backgroundPosition:'center'}:{}}>
+  const formatCopy=(value:string)=>value.replaceAll('{name}',dataSettings.name);
+  const art=(item:SiteArt,kind:string)=>item.image?<img key={kind} className={'site-artwork site-artwork-'+kind} src={item.image}
+    alt="" aria-hidden="true" draggable={false}
+    style={{left:item.left+'%',top:item.top+'%',width:item.width+'px',opacity:item.opacity/100}}/>:null;
+  const overlay=site.backgroundOverlay/100;
+  const themeVars={
+    '--site-bg':site.backgroundColor,'--site-header':site.headerColor,
+    '--site-chat':site.chatColor,'--site-bubble':site.bubbleColor,
+    '--site-accent':site.accentColor,'--site-text':site.textColor,'--site-button':site.buttonColor,
+    '--site-font-size':site.fontScale/100,
+    '--site-width':site.maxWidth+'px','--site-radius':site.cornerRadius+'px',
+    '--site-hero-pad':site.heroSpacing+'px',
+    fontFamily:site.fontFamily+', Arial, sans-serif',
+    backgroundColor:site.backgroundColor,
+    ...(site.backgroundImage?{backgroundImage:'linear-gradient(rgba(255,255,255,'+overlay+'),rgba(255,255,255,'+overlay+')),url("'+site.backgroundImage+'")',
+      backgroundSize:'cover',backgroundPosition:site.backgroundPosition,backgroundAttachment:'fixed'}:{})
+  } as CSSProperties;
+  const hero=<section className="simple-hero" aria-labelledby="hero-title">
+    {art(site.artLeft,'left')}{art(site.artRight,'right')}
+    <div className="simple-intro"><span className="simple-eyebrow">{site.heroEyebrow}</span>
+      <h1 id="hero-title">{site.heroBefore} <span>{dataSettings.name}</span>{site.heroAfter}</h1>
+      <p>{site.heroDescription}</p></div>
+    <div className="simple-avatar-area">
+      <div className="speech-bubble simple-bubble" role="status" aria-live="polite"
+        style={site.bubbleArtImage?{backgroundImage:'linear-gradient(#ffffffd9,#ffffffd9),url("'+site.bubbleArtImage+'")',backgroundSize:'cover',backgroundPosition:'center'}:{}}>
+        <span className="bubble-label"><span className="little-dot"/> {formatCopy(site.bubbleCaption)}</span><p>{reply}</p><span className="bubble-tail"/></div>
+      <div className="avatar-frame simple-avatar"
+        style={{width:'min('+dataSettings.size+'px, 100%)',transform:'translateX('+dataSettings.horizontalOffset+'px)'}}>
+        <Avatar settings={dataSettings} animation={animation} onInteract={handleTouch}/>
+      </div>
+    </div>
+    {site.showTouchHint&&<p className="simple-tap-note">{site.touchHint}</p>}
+  </section>;
+  const chat=<section className="conversation-card simple-chat" aria-label="Ruang perbualan">
+    {art(site.artChat,'chat')}
+    <div className="conversation-heading simple-chat-heading"><div><h2>{formatCopy(site.chatTitle)}</h2><p>{site.chatDescription}</p></div>
+      <span className="live-status"><span className={voice.isListening?'pulse-status':''}/>{voice.isListening?'Sedang mendengar...':voice.isSpeaking?'Sedang bercakap...':animation==='thinking'?'Sedang berfikir...':'Sedia untuk menjawab'}</span>
+    </div>
+    {currentQuestion&&<div className="student-question"><span>{site.questionCaption}</span><p>“{currentQuestion}”</p></div>}
+    <form className="ask-controls" onSubmit={e=>{e.preventDefault();ask(input);}}>
+      <button type="button" className={'microphone-button '+(voice.isListening?'recording':'')} onClick={beginMic}
+        title={voice.isListening?'Hentikan mendengar':'Tanya menggunakan suara'} aria-label="Tanya menggunakan suara">
+        {voice.isListening?<MicOff size={27}/>:<Mic size={27}/>}</button>
+      <label className="question-input"><input value={input} onChange={e=>setInput(e.target.value)}
+        placeholder={site.placeholder} aria-label="Soalan kepada Aki"/></label>
+      <button className="send-button" type="submit" disabled={!input.trim()}><span>{site.sendLabel}</span><Send size={19}/></button>
+    </form>
+    {site.showVoiceControls&&<div className="speech-actions simple-speech-actions">
+      <button onClick={()=>say(dataSettings.greeting,'talking')}><Volume2 size={16}/> {site.voiceTestLabel}</button>
+      <button onClick={()=>say(reply,'talking',replyRecording)}><Volume2 size={16}/> {site.repeatLabel}</button>
+      <button onClick={stopAudio}><Pause size={16}/> {site.stopLabel}</button>
+      <button onClick={()=>voice.setMuted(v=>!v)}>{voice.muted?<VolumeX size={16}/>:<Volume2 size={16}/>} {voice.muted?site.unmuteLabel:site.muteLabel}</button>
+      {voice.isListening&&<button onClick={()=>{voice.stopListening();setAnimation('idle');}}><MicOff size={16}/> Henti Mendengar</button>}
+    </div>}
+    {site.showCamera&&<CameraWave onWave={()=>say(site.cameraWaveVoice,'waving')}
+      content={{title:site.cameraTitle,description:site.cameraDescription,start:site.cameraStart,stop:site.cameraStop,
+        privacy:site.cameraPrivacy,ready:site.cameraReady,detected:site.cameraDetected,missing:site.cameraMissing}}/>}
+    {(voice.error||feedback||saveError||cloudNote)&&<div className="notice-lines" aria-live="polite">
+      {voice.error&&<p><HelpCircle size={15}/> {voice.error}</p>}{feedback&&<p><CircleHelp size={15}/> {feedback}</p>}
+      {saveError&&<p><HelpCircle size={15}/> {saveError}</p>}{cloudNote&&<p><Check size={15}/> {cloudNote}</p>}</div>}
+    {!voice.speechRecognitionSupported&&<p className="compatibility-note">Mikrofon tidak disokong pada pelayar ini. Kamu masih boleh menaip soalan.</p>}
+  </section>;
+  return <div className="app-shell simple-app custom-site" style={themeVars}>
     <header className="site-header simple-header">
-      <div className="brand" aria-label="Kawan Prasejarah"><span className="brand-badge"><span>🪨</span></span><span className="brand-text"><strong>KAWAN <em>PRASEJARAH</em></strong><small>MARI BERBUAL DENGAN AKI!</small></span></div>
-      <button className="teacher-button" onClick={()=>setTeacherOpen(true)}><ShieldCheck size={18}/> Mod Guru</button>
+      <div className="brand" aria-label="Kawan Prasejarah">
+        <span className="brand-badge">{site.brandLogoImage?<img className="site-brand-art" alt="" src={site.brandLogoImage}/>:<span>🪨</span>}</span>
+        <span className="brand-text"><strong>{site.brandBefore} <em>{site.brandAccent}</em></strong><small>{site.brandSubtitle}</small></span></div>
+      <button className="teacher-button" onClick={()=>setTeacherOpen(true)}><ShieldCheck size={18}/> {site.teacherLabel}</button>
     </header>
-    <main className="simple-main">
-      <section className="simple-hero" aria-labelledby="hero-title">
-        <div className="simple-intro"><span className="simple-eyebrow">SAHABAT SEJARAH TAHUN 4</span><h1 id="hero-title">Salam sejahtera, saya <span>{dataSettings.name}!</span></h1><p>Kemukakan soalan tentang Zaman Prasejarah. Saya sedia membantu.</p></div>
-        <div className="simple-avatar-area">
-          <div className="speech-bubble simple-bubble" role="status" aria-live="polite"><span className="bubble-label"><span className="little-dot"/> {dataSettings.name.toUpperCase()} BERKATA</span><p>{reply}</p><span className="bubble-tail"/></div>
-          <div className="avatar-frame simple-avatar" style={{width:'min(' + dataSettings.size + 'px, 100%)',transform:'translateX(' + dataSettings.horizontalOffset + 'px)'}}><Avatar settings={dataSettings} animation={animation} onInteract={handleTouch}/></div>
-        </div>
-        <p className="simple-tap-note">Sentuh Aki untuk melihat tindak balasnya.</p>
-      </section>
-      <section className="conversation-card simple-chat" aria-label="Ruang perbualan">
-        <div className="conversation-heading simple-chat-heading"><div><h2>Mari Tanya {dataSettings.name}!</h2><p>Gunakan mikrofon atau taip soalan kamu.</p></div><span className="live-status"><span className={voice.isListening?'pulse-status':''}/>{voice.isListening?'Sedang mendengar...':voice.isSpeaking?'Sedang bercakap...':animation==='thinking'?'Sedang berfikir...':'Sedia untuk menjawab'}</span></div>
-        {currentQuestion&&<div className="student-question"><span>KAMU TANYA</span><p>“{currentQuestion}”</p></div>}
-        <form className="ask-controls" onSubmit={e=>{e.preventDefault();ask(input);}}>
-          <button type="button" className={'microphone-button ' + (voice.isListening?'recording':'')} onClick={beginMic} title={voice.isListening?'Hentikan mendengar':'Tanya menggunakan suara'} aria-label="Tanya menggunakan suara">{voice.isListening?<MicOff size={27}/>:<Mic size={27}/>}</button>
-          <label className="question-input"><input value={input} onChange={e=>setInput(e.target.value)} placeholder="Contoh: Di manakah manusia Paleolitik tinggal?" aria-label="Soalan kepada Aki"/></label>
-          <button className="send-button" type="submit" disabled={!input.trim()}><span>Hantar Soalan</span><Send size={19}/></button>
-        </form>
-        <div className="speech-actions simple-speech-actions">
-          <button onClick={()=>say(dataSettings.greeting,'talking')}><Volume2 size={16}/> Uji Suara Indonesia</button>
-          <button onClick={()=>say(reply,'talking',replyRecording)}><Volume2 size={16}/> Ulang Jawapan</button>
-          <button onClick={stopAudio}><Pause size={16}/> Henti Bercakap</button>
-          <button onClick={()=>voice.setMuted(v=>!v)}>{voice.muted?<VolumeX size={16}/>:<Volume2 size={16}/>} {voice.muted?'Buka Audio':'Senyapkan'}</button>
-          {voice.isListening&&<button onClick={()=>{voice.stopListening();setAnimation('idle');}}><MicOff size={16}/> Henti Mendengar</button>}
-        </div>
-        <CameraWave onWave={()=>say('Salam sejahtera! Saya melihat kamu sedang melambai. Saya melambai kembali!','waving')}/>
-        {(voice.error||feedback||saveError||cloudNote)&&<div className="notice-lines" aria-live="polite">{voice.error&&<p><HelpCircle size={15}/> {voice.error}</p>}{feedback&&<p><CircleHelp size={15}/> {feedback}</p>}{saveError&&<p><HelpCircle size={15}/> {saveError}</p>}{cloudNote&&<p><Check size={15}/> {cloudNote}</p>}</div>}
-        {!voice.speechRecognitionSupported&&<p className="compatibility-note">Mikrofon tidak disokong pada pelayar ini. Kamu masih boleh menaip soalan.</p>}
-      </section>
-    </main>
-    <footer className="simple-footer">KAWAN PRASEJARAH · Sejarah Tahun 4</footer>
-    {teacherOpen&&<TeacherPanel data={data} onChange={handleUpdate} onClose={()=>setTeacherOpen(false)} onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}} onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}} voiceNames={voice.voices.filter(v=>isIndonesianVoice(v.lang)).map(v=>({value:v.voiceURI,label:(voiceGender(v.name)==='female'?'Suara wanita • ':'Suara belum dikenal pasti • ')+v.name+' ('+v.lang+')'}))}/>}
+    <main className="simple-main">{site.chatFirst?<>{chat}{hero}</>:<>{hero}{chat}</>}</main>
+    <footer className="simple-footer">{site.footerLabel}</footer>
+    {teacherOpen&&<TeacherPanel data={data} onChange={handleUpdate} onClose={()=>setTeacherOpen(false)}
+      onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}}
+      onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}}
+      voiceNames={voice.voices.filter(v=>isIndonesianVoice(v.lang)).map(v=>({value:v.voiceURI,
+        label:(voiceGender(v.name)==='female'?'Suara wanita • ':'Suara • ')+v.name+' ('+v.lang+')'}))}/>}
   </div>;
 }
