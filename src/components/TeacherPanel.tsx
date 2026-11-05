@@ -6,14 +6,16 @@ import { cloudAvailable, getTeacherSession, publishData, teacherLogin, teacherLo
 import { downloadJson, isPinSet, parseBackup, setPin, verifyPin } from '../lib/storage';
 import { matchQuestion } from '../lib/matcher';
 import AnswerAudioEditor from './AnswerAudioEditor';
+import SiteDesigner from './SiteDesigner';
 
-type Tab='questions'|'settings'|'backups'|'publish';
+type Tab='questions'|'settings'|'design'|'backups'|'publish';
 interface Props {
   data:AppData;
   onChange:(next:AppData)=>void;
   onClose:()=>void;
   onSay:(value:string,audio?:string)=>void;
   onAnimate:()=>void;
+  onPreview:()=>void;
   voiceNames:{value:string,label:string}[];
 }
 const newQuestion=():KnowledgeItem=>({id:crypto.randomUUID(),era:'Paleolitik',question:'',alternatives:[],keywords:[],answerMS:'',answerZH:'',enabled:true});
@@ -32,7 +34,7 @@ function UploadImage({label,onLoaded}: {label:string;onLoaded:(image:string)=>vo
   </label>;
 }
 
-export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voiceNames}:Props) {
+export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPreview,voiceNames}:Props) {
   const [unlocked,setUnlocked]=useState(false);
   const [onlineAuth,setOnlineAuth]=useState(false);
   const [localChoice,setLocalChoice]=useState(!cloudAvailable);
@@ -97,9 +99,10 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
   </section></div>;
 
   return <div className="teacher-backdrop"><section className="teacher-panel" role="dialog" aria-modal="true" aria-label="Papan pemuka guru">
-    <header className="teacher-header"><div><span className="teacher-eyebrow"><ShieldCheck size={15}/> RUANG PENDIDIK</span><h2>Studio Guru <span>✦</span></h2><p>Urus soalan, jawapan dan suara Aki pada bila-bila masa.</p></div><div className="teacher-header-actions"><span className="mode-pill">{onlineAuth?'● Guru Dalam Talian':'● Simpanan Setempat'}</span><button className="icon-button" onClick={logout} title="Log keluar"><LogOut size={19}/></button><button className="icon-button" onClick={onClose} title="Tutup"><X size={23}/></button></div></header>
+    <header className="teacher-header"><div><span className="teacher-eyebrow"><ShieldCheck size={15}/> RUANG PENDIDIK</span><h2>Studio Guru <span>✦</span></h2><p>Urus kandungan, reka bentuk, gambar dan suara Aki pada bila-bila masa.</p></div><div className="teacher-header-actions"><span className="mode-pill">{onlineAuth?'● Guru Dalam Talian':'● Simpanan Setempat'}</span><button className="icon-button" onClick={logout} title="Log keluar"><LogOut size={19}/></button><button className="icon-button" onClick={onClose} title="Tutup"><X size={23}/></button></div></header>
     <nav className="teacher-tabs" aria-label="Bahagian Mod Guru">
       <button className={tab==='questions'?'active':''} onClick={()=>{setTab('questions');setEditingQuestion(null);}}><BookOpen size={17}/> Bank Soalan</button>
+      <button className={tab==='design'?'active':''} onClick={()=>setTab('design')}><Settings2 size={17}/> Reka Bentuk Laman</button>
       <button className={tab==='settings'?'active':''} onClick={()=>setTab('settings')}><Settings2 size={17}/> Avatar</button>
       <button className={tab==='backups'?'active':''} onClick={()=>setTab('backups')}><Download size={17}/> Data & Sandaran</button>
       <button className={tab==='publish'?'active':''} onClick={()=>setTab('publish')}><CloudUpload size={17}/> Terbitkan</button>
@@ -122,11 +125,12 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
           {testResult&&<div className="test-result"><p><strong>Padanan:</strong> {testResult.item?.question|| (testResult.ambiguous.length?'Beberapa soalan hampir sama':'Tiada padanan yang yakin')}</p><p><strong>Keyakinan:</strong> {Math.round(testResult.confidence*100)}% (anggaran skor padanan, bukan kebarangkalian)</p>{testResult.item&&<><p><strong>Jawapan:</strong> {testResult.item.answerMS}</p><div className="form-actions"><button className="btn btn-soft" onClick={()=>onSay(testResult.item!.answerMS,testResult.item!.audioMS)}><Volume2 size={16}/> Uji Suara</button><button className="btn btn-soft" onClick={onAnimate}><Play size={16}/> Uji Animasi</button></div></>}{testResult.ambiguous.length>0&&<p>Sila gunakan soalan yang lebih khusus: {testResult.ambiguous.map(v=>v.question).join(' / ')}</p>}</div>}
         </section>
       </>)}
-      {tab==='settings'&&<><div className="section-heading"><div><h3>Personaliti & Rupa Aki</h3><p>Aki menggunakan suara Bahasa Indonesia, dengan pilihan wanita diutamakan apabila tersedia. Rakaman guru tetap diutamakan.</p></div></div><div className="edit-grid"><label>Nama Avatar<input value={settings.name} onChange={e=>updateSettings({name:e.target.value})}/></label><label>Suara Bahasa Indonesia<select value={settings.preferredVoice} onChange={e=>updateSettings({preferredVoice:e.target.value})}><option value="">Automatik — Bahasa Indonesia</option>{voiceNames.map(v=><option key={v.value} value={v.value}>{v.label}</option>)}</select></label><p className="voice-setting-note">Pilih suara Bahasa Indonesia dan tekan “Uji Ucapan” untuk mendengar contoh. Jantina suara bergantung pada peranti. Rakaman guru juga boleh digunakan.</p><label>Ucapan Selamat Datang<textarea rows={3} value={settings.greeting} onChange={e=>updateSettings({greeting:e.target.value})}/></label><label>Jawapan Jika Tidak Tahu<textarea rows={3} value={settings.unknownAnswer} onChange={e=>updateSettings({unknownAnswer:e.target.value})}/></label>
+      {tab==='design'&&<SiteDesigner value={data.site} onChange={site=>onChange({...data,site})} onPreview={onPreview}/>}
+      {tab==='settings'&&<><div className="section-heading"><div><h3>Personaliti & Rupa Aki</h3><p>Laraskan rupa dan suara Aki. Rakaman guru dimainkan terlebih dahulu.</p></div></div><div className="edit-grid"><label>Nama Avatar<input value={settings.name} onChange={e=>updateSettings({name:e.target.value})}/></label><label>Pilihan Suara Aki<select value={settings.preferredVoice} onChange={e=>updateSettings({preferredVoice:e.target.value})}><option value="">Suara Automatik</option>{voiceNames.map(v=><option key={v.value} value={v.value}>{v.label}</option>)}</select></label><p className="voice-setting-note">Pilih dan uji suara yang tersedia pada peranti. Guru juga boleh menggunakan rakaman suara sendiri.</p><label>Ucapan Selamat Datang<textarea rows={3} value={settings.greeting} onChange={e=>updateSettings({greeting:e.target.value})}/></label><label>Jawapan Jika Tidak Tahu<textarea rows={3} value={settings.unknownAnswer} onChange={e=>updateSettings({unknownAnswer:e.target.value})}/></label>
         <label>Kelajuan Suara: {settings.speechRate.toFixed(2)}×<input type="range" min="0.6" max="1.5" step="0.05" value={settings.speechRate} onChange={e=>updateSettings({speechRate:Number(e.target.value)})}/></label><label>Saiz Avatar: {settings.size} px<input type="range" min="270" max="580" value={settings.size} onChange={e=>updateSettings({size:Number(e.target.value)})}/></label>
         <label>Kedudukan Melintang: {settings.horizontalOffset} px<input type="range" min="-160" max="160" value={settings.horizontalOffset} onChange={e=>updateSettings({horizontalOffset:Number(e.target.value)})}/></label><label>Warna Kulit<input type="color" value={settings.skinColor} onChange={e=>updateSettings({skinColor:e.target.value})}/></label><label>Warna Rambut<input type="color" value={settings.hairColor} onChange={e=>updateSettings({hairColor:e.target.value})}/></label><label>Warna Pakaian<input type="color" value={settings.clothingColor} onChange={e=>updateSettings({clothingColor:e.target.value})}/></label></div>
         <h4 className="teacher-subtitle">Kata-kata Reaksi</h4><div className="edit-grid">{(Object.keys(settings.reactions) as (keyof AvatarSettings['reactions'])[]).map(key=><label key={key}>Reaksi {key}<input value={settings.reactions[key]} onChange={e=>updateReaction(key,e.target.value)}/></label>)}</div>
-        <h4 className="teacher-subtitle">Gambar & Lapisan Animasi</h4><p className="muted-copy">Imej penuh akan bergerak sebagai satu keping (tidak mempunyai artikulasi mulut). Untuk animasi bahagian badan, muat naik imej telus berasingan mengikut lapisan. Kekalkan avatar SVG asal untuk semua animasi wajah.</p>
+        <h4 className="teacher-subtitle">Gambar & Lapisan Animasi</h4><p className="muted-copy">Imej penuh avatar bergerak sebagai satu gambar tanpa animasi mulut berasingan. Untuk animasi kepala, mulut dan tangan, muat naik setiap bahagian secara berlapis. Gambar hiasan dan latar halaman boleh disunting pada Reka Bentuk Laman.</p>
         <div className="upload-grid"><UploadImage label="Gambar latar" onLoaded={image=>updateSettings({backgroundImage:image})}/><UploadImage label="Imej penuh avatar (statik)" onLoaded={image=>updateSettings({fullArtwork:image})}/>{(['head','torso','leftArm','rightArm','legs','mouth'] as ArtPart[]).map(v=><UploadImage key={v} label={`Lapisan ${v}`} onLoaded={image=>updateSettings({layers:{...settings.layers,[v]:image},fullArtwork:''})}/>)}</div><div className="form-actions"><button className="btn btn-soft" onClick={()=>updateSettings({backgroundImage:'',fullArtwork:'',layers:{}})}><RotateCcw size={16}/> Padam Semua Imej Muat Naik</button><button className="btn btn-soft" onClick={()=>onSay(settings.greeting)}><Volume2 size={16}/> Uji Ucapan</button></div>
       </>}
       {tab==='backups'&&<><div className="section-heading"><div><h3>Data & Sandaran</h3><p>Jaga kandungan pembelajaran anda dengan salinan fail JSON.</p></div></div><div className="backup-grid"><div className="backup-card"><Download size={28}/><h4>Eksport JSON</h4><p>Muat turun semua soalan, rakaman dan tetapan ke komputer anda.</p><button className="btn btn-primary" onClick={()=>downloadJson(data)}><Download size={17}/> Eksport JSON</button></div><div className="backup-card"><FileUp size={28}/><h4>Import / Pulihkan JSON</h4><p>Pilih sandaran lama untuk menggantikan draf sedia ada.</p><button className="btn btn-soft" onClick={()=>fileInput.current?.click()}><FileUp size={17}/> Import JSON</button><input hidden type="file" ref={fileInput} accept="application/json,.json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(f)await importJson(f);}}/></div></div><div className="info-note"><ShieldCheck size={18}/><p><strong>Perhatian:</strong> perubahan setempat disimpan dalam pelayar/peranti ini sahaja. Eksport JSON untuk sandaran. Pada peranti lain, import fail yang sama atau gunakan Supabase dan terbitkan.</p></div></>}
