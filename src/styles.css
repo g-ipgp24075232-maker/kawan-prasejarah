@@ -337,3 +337,41 @@
   .custom-pose-avatar .pose-eye-picture{transition:none}
   .custom-pose-avatar .pose-skin-eyelid{animation:none;transform:translate(-50%,-50%) scaleY(1);opacity:1}
 }
+
+/* Aki's pupil/eyelid animations are fully disabled; never flash the face.
+   Mouth remains a lightly opened patch throughout audio and gently moves
+   by scaling about its own centre, not the whole portrait. */
+.custom-pose-avatar .pose-eyelids,
+.custom-pose-avatar .pose-eye-patches,
+.custom-pose-avatar .pose-blink-image,
+.custom-pose-avatar .pose-skin-eyelid,
+.custom-pose-avatar .pose-eye-picture{
+  display:none!important;
+}
+.custom-pose-avatar .pose-mouth-overlay{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 155ms ease-out;
+  transform:scaleY(.82);
+  will-change:opacity,transform;
+  animation:none;
+}
+.custom-pose-avatar .pose-mouth-overlay.is-speaking{
+  opacity:1;
+  animation:aki-subtle-mouth-motion 850ms ease-in-out infinite;
+}
+@keyframes aki-subtle-mouth-motion{
+  0%,100%{transform:scaleY(.77)}
+  22%{transform:scaleY(.91)}
+  51%{transform:scaleY(.83)}
+  75%{transform:scaleY(.97)}
+}
+@media(prefers-reduced-motion:reduce){
+  .custom-pose-avatar .pose-mouth-overlay.is-speaking{
+    animation:none;
+    transform:scaleY(.84);
+  }
+}

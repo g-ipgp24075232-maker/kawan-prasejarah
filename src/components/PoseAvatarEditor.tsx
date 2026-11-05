@@ -8,8 +8,7 @@ interface Props{settings:AvatarSettings;onChange:(update:Partial<AvatarSettings>
 const items:{key:AvatarPose;label:string;description:string}[]=[
   {key:'idle',label:'Aki Biasa',description:'Pose biasa: mata terbuka, mulut tertutup'},
   {key:'talk',label:'Aki Bercakap',description:'Hanya kawasan mulut digunakan untuk animasi suara'},
-  {key:'wave',label:'Aki Melambai',description:'Gambar Aki mengangkat tangan'},
-  {key:'blink',label:'Aki Berkelip (pilihan)',description:'Mata tertutup; jika tiada, mata ditutup melalui animasi laman'}
+  {key:'wave',label:'Aki Melambai',description:'Gambar Aki mengangkat tangan'}
 ];
 export default function PoseAvatarEditor({settings,onChange,onPreview}:Props){
   const [message,setMessage]=useState('');
@@ -32,14 +31,14 @@ export default function PoseAvatarEditor({settings,onChange,onPreview}:Props){
     setBusy(true);setMessage('');
     try{
       const pack=parseAvatarPosePack(await file.text());
-      onChange({poses:pack.poses,blink:pack.blink?{...pack.blink,color:pack.blink.color.toLowerCase()==='#f4b18b'?'#fac29d':pack.blink.color}:settings.blink,fullArtwork:''});
+      onChange({poses:pack.poses,fullArtwork:''});
       setMessage('Pek tiga gambar Aki berjaya dimuat naik! Semua gambar dipasang dan gambar avatar lama dinyahaktifkan.');
     }catch(error){setMessage(error instanceof Error?error.message:'Pek avatar tidak sah.');}
     finally{setBusy(false);}
   }
   return <section className="pose-editor">
     <h4 className="teacher-subtitle">Studio Animasi Aki – Gambar Sendiri</h4>
-    <p className="muted-copy">Muat naik tiga gambar Aki yang sepadan. Gambar biasa kekal pada skrin. Semasa bercakap, hanya kawasan mulut bergerak; semasa berkelip, hanya mata tertutup. Gambar melambai muncul apabila Aki melambai.</p>
+    <p className="muted-copy">Muat naik tiga gambar Aki yang sepadan. Aki tidak berkelip mata. Semasa bercakap, gambar biasa kekal dan hanya mulut terbuka sedikit serta bergerak dengan lembut. Gambar melambai digunakan apabila Aki melambai.</p>
     <div className="pose-import">
       <div><strong>Import Pek Aki (3 Gambar Sekali Gus)</strong><p>Jika cikgu mempunyai fail <code>aki-avatar-pack.json</code>, import untuk memasang ketiga-tiga gambar terus.</p></div>
       <button type="button" className="btn btn-primary" disabled={busy} onClick={()=>packFile.current?.click()}><FileUp size={17}/> Import Pek Aki</button>
@@ -58,23 +57,8 @@ export default function PoseAvatarEditor({settings,onChange,onPreview}:Props){
       {settings.poses[item.key]&&<button type="button" className="btn btn-soft" onClick={()=>update(item.key,'')}><RotateCcw size={15}/> Padam</button>}
     </div>)}</div>
     <div className="pose-blink-controls">
-      <strong>Lokasi Mata – Hanya mata yang berkelip</strong>
-      <p className="muted-copy">Aki tidak lagi bertukar gambar penuh ketika berkelip. Hanya mata ditutup perlahan. Laraskan kedudukan dan warna kelopak untuk padan dengan wajah Aki.</p>
-      <div className="pose-blink-grid">
-      {([
-        ['leftX','Mata kiri (X)',5,90],['rightX','Mata kanan (X)',5,95],
-        ['eyeY','Ketinggian mata (Y)',5,85],['eyeWidth','Lebar mata',3,25],
-        ['eyeHeight','Tinggi kelopak',2,18]
-      ] as const).map(([key,label,min,max])=><label key={key}>{label}: {settings.blink[key]}%
-        <input type="range" min={min} max={max} step=".2" value={settings.blink[key]}
-          onChange={e=>onChange({blink:{...settings.blink,[key]:Number(e.target.value)}})}/></label>)}
-      <label>Warna kelopak <input type="color" value={settings.blink.color}
-        onChange={e=>onChange({blink:{...settings.blink,color:e.target.value}})}/></label>
-      </div>
-    </div>
-    <div className="pose-blink-controls">
       <strong>Lokasi Mulut – Pergerakan Semasa Bercakap</strong>
-      <p className="muted-copy">Hanya bahagian mulut daripada gambar Aki Bercakap yang digunakan. Laraskan kawasan jika mulut tidak tepat atau terdapat kesan di sekelilingnya.</p>
+      <p className="muted-copy">Aki akan mengekalkan wajah asal dan hanya menggerakkan bahagian mulut sedikit semasa audio dimainkan. Laraskan kedudukan dan saiz kawasan mulut jika tidak tepat.</p>
       <div className="pose-blink-grid">
       {([
         ['x','Kedudukan mulut (X)',15,85],['y','Kedudukan mulut (Y)',10,85],
