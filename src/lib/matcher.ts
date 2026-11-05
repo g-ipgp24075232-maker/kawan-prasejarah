@@ -55,16 +55,27 @@ function similarity(a:string,b:string):number {
 function hasEra(sentence:string,era:Era):boolean {return new RegExp(`\\b${era.toLowerCase()}\\b`,'i').test(normalize(sentence));}
 
 export interface MatchResult { item: KnowledgeItem | null; confidence: number; ambiguous: KnowledgeItem[]; }
+const exactIndexes=new WeakMap<KnowledgeItem[],Map<string,KnowledgeItem>>();
 export function matchQuestion(input:string,items:KnowledgeItem[]):MatchResult {
   const clean=normalize(input);
   if(!clean)return {item:null,confidence:0,ambiguous:[]};
   const mentioned=ERAS.filter(era=>hasEra(clean,era));
   const active=items.filter(v=>v.enabled);
   const withoutName=clean.replace(/^aki\s+/,'');
-  const direct=active.find(item=>[item.question,...item.alternatives].some(phrase=>{
-    const candidate=normalize(phrase);
-    return candidate===clean||candidate===withoutName||candidate.replace(/^aki\s+/,'')===withoutName;
-  }));
+  let index=exactIndexes.get(items);
+  if(!index){
+    index=new Map<string,KnowledgeItem>();
+    for(const item of active){
+      for(const phrase of [item.question,...item.alternatives]){
+        const key=normalize(phrase);
+        if(!index.has(key))index.set(key,item);
+        const simpler=key.replace(/^aki\s+/,'');
+        if(!index.has(simpler))index.set(simpler,item);
+      }
+    }
+    exactIndexes.set(items,index);
+  }
+  const direct=index.get(clean)??index.get(withoutName);
   if(direct)return {item:direct,confidence:1,ambiguous:[]};
   const result=active.map(item=>{
     const variants=[item.question,...item.alternatives.filter(Boolean)];
@@ -74,7 +85,7 @@ export function matchQuestion(input:string,items:KnowledgeItem[]):MatchResult {
     const keyword=keyTerms.length?terms.filter(t=>keyTerms.some(k=>fuzzyToken(t,k)>.8)).length / Math.max(1,Math.min(keyTerms.length,terms.length)):0;
     // The era is a strict condition if the pupil has mentioned one era explicitly.
     const eraConflicts=mentioned.length===1 && item.era!=='Perbandingan' && item.era!=='Umum' && item.era!==mentioned[0] && variants.every(v=>!hasEra(v,mentioned[0]));
-    const score=eraConflicts?0:Math.min(1,best*.9+keyword*.1+(mentioned.includes(item.era)? .02:0));
+    const score=eraConflicts?0:Math.min(1,best*.9+keyword*.1+(mentioned.some(era=>era===item.era)? .02:0));
     return {item,score};
   }).sort((a,b)=>b.score-a.score);
   const first=result[0];
