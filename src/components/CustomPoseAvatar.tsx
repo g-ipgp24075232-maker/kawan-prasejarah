@@ -1,5 +1,6 @@
 import { useEffect,useState } from 'react';
 import type { Animation,AvatarSettings } from '../types';
+import { chooseAvatarPose } from '../lib/avatarMotion';
 
 type TouchArea='head'|'belly'|'leftHand'|'rightHand'|'feet'|'face';
 interface Props{
@@ -17,48 +18,49 @@ const hitTargets:{part:TouchArea;left:number;top:number;width:number;height:numb
   {part:'feet',left:27,top:84,width:53,height:16,title:'Sentuh kaki'}
 ];
 export default function CustomPoseAvatar({settings,animation,speaking=false,onInteract}:Props){
-  const [blink,setBlink]=useState(false);
-  const [talkFrame,setTalkFrame]=useState(false);
+  const [blinkTick,setBlinkTick]=useState(0);
+  const [isBlinking,setBlinking]=useState(false);
   useEffect(()=>{
-    let blinkTimeout:ReturnType<typeof setTimeout>|undefined;
-    let endTimeout:ReturnType<typeof setTimeout>|undefined;
+    // Irregular human-style blinking: a quick close/hold/open with occasional
+    // double blink. Avoid a repeating CSS animation with robotic timing.
     let active=true;
+    const timers:ReturnType<typeof setTimeout>[]=[];
+    const schedule=(fn:()=>void,delay:number)=>{
+      const id=setTimeout(()=>{if(active)fn();},delay);
+      timers.push(id);
+    };
+    const blinkOnce=()=>{
+      setBlinkTick(value=>value+1);
+      setBlinking(true);
+      schedule(()=>setBlinking(false),245);
+    };
     const next=()=>{
-      const delay=2900+Math.random()*2000;
-      blinkTimeout=setTimeout(()=>{
-        if(!active)return;
-        setBlink(true);
-        endTimeout=setTimeout(()=>{if(active){setBlink(false);next();}},145);
-      },delay);
+      schedule(()=>{
+        blinkOnce();
+        if(Math.random()<.20)schedule(blinkOnce,345);
+        schedule(next,650);
+      },3500+Math.random()*3500);
     };
     next();
-    return ()=>{active=false;clearTimeout(blinkTimeout);clearTimeout(endTimeout);};
+    return ()=>{active=false;timers.forEach(clearTimeout);};
   },[]);
-  const talking=animation==='talking'&&speaking;
-  useEffect(()=>{
-    if(!talking){setTalkFrame(false);return;}
-    // Switch between matching closed/open-mouth photographs while audio plays.
-    const interval=setInterval(()=>setTalkFrame(s=>!s),185);
-    return ()=>clearInterval(interval);
-  },[talking]);
-  const waving=animation==='waving';
-  const portrait=blink&&settings.poses.blink
-    ?settings.poses.blink
-    :waving&&settings.poses.wave
-      ?settings.poses.wave
-      :talking&&talkFrame&&settings.poses.talk
-        ?settings.poses.talk
-        :settings.poses.idle;
+  const pose=chooseAvatarPose(speaking,animation,settings.poses);
+  const portrait=settings.poses[pose]??settings.poses.idle;
+  const waving=animation==='waving'&&!speaking;
   const b=settings.blink;
+
   return <div className={'custom-pose-avatar pose-state-'+animation+(talking?' pose-speaking':'')} role="img"
       aria-label="Aki, watak kartun prasejarah yang boleh bercakap, berkelip mata dan melambai">
     <div className={'custom-pose-character'+(waving?' pose-waving':'')+(animation==='jumping'?' pose-jumping':'')}>
       <img className="custom-pose-image" src={portrait} alt="Aki" draggable={false}/>
-      {blink&&!settings.poses.blink&&<div className="pose-eyelids" aria-hidden="true">
-        {[b.leftX,b.rightX].map((x,i)=><span key={i} className="pose-eyelid"
-          style={{left:x+'%',top:b.eyeY+'%',width:b.eyeWidth+'%',height:b.eyeHeight+'%',
-            backgroundColor:b.color}}/>)}
-      </div>}
+      {isBlinking&& (settings.poses.blink
+        ? <img key={'blink-'+blinkTick} className="custom-pose-image pose-blink-image"
+            src={settings.poses.blink} alt="" aria-hidden="true" draggable={false}/>
+        : <div key={'blink-'+blinkTick} className="pose-eyelids" aria-hidden="true">
+            {[b.leftX,b.rightX].map((x,i)=><span key={i} className="pose-eyelid"
+              style={{left:x+'%',top:b.eyeY+'%',width:b.eyeWidth+'%',height:b.eyeHeight+'%',
+                backgroundColor:b.color}}/>)}
+          </div>)}
     </div>
     {hitTargets.map(h=><button key={h.part} type="button" className="pose-hit"
       title={h.title} aria-label={h.title}
