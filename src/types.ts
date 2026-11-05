@@ -24,7 +24,14 @@ export interface QuizItem {
 }
 
 export type ArtPart = 'head' | 'torso' | 'leftArm' | 'rightArm' | 'legs' | 'mouth';
+export type AvatarPose = 'idle' | 'talk' | 'wave' | 'blink';
+export type AvatarPoses = Partial<Record<AvatarPose,string>>;
+export interface AvatarBlinkOptions {
+  leftX:number; rightX:number; eyeY:number; eyeWidth:number; eyeHeight:number; color:string;
+}
 export interface AvatarSettings {
+  poses: AvatarPoses;
+  blink: AvatarBlinkOptions;
   name: string;
   greeting: string;
   unknownAnswer: string;

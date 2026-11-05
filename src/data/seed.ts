@@ -92,6 +92,8 @@ export const initialData: AppData = {
     hairColor: '#553325',
     clothingColor: '#ad7957',
     fullArtwork: '',
+    poses: {},
+    blink: {leftX:38.7,rightX:58.9,eyeY:31.6,eyeWidth:9,eyeHeight:6.8,color:'#f4b18b'},
     layers: {},
     eraDescriptions: {
       Paleolitik: 'Pada Zaman Paleolitik, manusia hidup secara nomad. Mereka memburu haiwan, mengumpul makanan dan menggunakan alat batu yang kasar.',

@@ -2,6 +2,7 @@ import type { AppData, AvatarSettings, KnowledgeItem, QuizItem } from '../types'
 import { ERAS } from '../types';
 import { initialData } from '../data/seed';
 import { validAnswerAudio } from './audio';
+import { safeImage,clamp } from './site';
 import { sanitizeSite } from './site';
 
 const STORAGE_KEY = 'kawan-prasejarah-draft-v1';
@@ -38,6 +39,9 @@ export function parseBackup(source: string): AppData {
   const r = isRecord(s.reactions) ? s.reactions : {};
   const e = isRecord(s.eraDescriptions) ? s.eraDescriptions : {};
   const layers = isRecord(s.layers) ? s.layers : {};
+  const poseInput=isRecord(s.poses)?s.poses:{};
+  const blinkInput=isRecord(s.blink)?s.blink:{};
+  const defaultBlink=defaults.blink;
   const settings: AvatarSettings = {
     name: str('name', defaults.name).slice(0,60),
     greeting: str('greeting',defaults.greeting).slice(0,1000),
@@ -48,6 +52,15 @@ export function parseBackup(source: string): AppData {
     horizontalOffset: typeof s.horizontalOffset === 'number' && Number.isFinite(s.horizontalOffset) ? Math.max(-160,Math.min(160,s.horizontalOffset)) : 0,
     backgroundImage: str('backgroundImage',''), skinColor: str('skinColor',defaults.skinColor), hairColor: str('hairColor',defaults.hairColor),
     clothingColor: str('clothingColor',defaults.clothingColor), fullArtwork:str('fullArtwork',''),
+    poses:Object.fromEntries(['idle','talk','wave','blink'].map(key=>[key,safeImage(poseInput[key])])) as AvatarSettings['poses'],
+    blink:{
+      leftX:clamp(blinkInput.leftX,5,90,defaultBlink.leftX),
+      rightX:clamp(blinkInput.rightX,5,95,defaultBlink.rightX),
+      eyeY:clamp(blinkInput.eyeY,5,85,defaultBlink.eyeY),
+      eyeWidth:clamp(blinkInput.eyeWidth,3,25,defaultBlink.eyeWidth),
+      eyeHeight:clamp(blinkInput.eyeHeight,2,18,defaultBlink.eyeHeight),
+      color:typeof blinkInput.color==='string'&&/^#[a-f0-9]{6}$/i.test(blinkInput.color)?blinkInput.color:defaultBlink.color
+    },
     layers: Object.fromEntries(Object.entries(layers).filter(([k,v])=>['head','torso','leftArm','rightArm','legs','mouth'].includes(k) && text(v) && v.startsWith('data:image/'))) as AvatarSettings['layers'],
     reactions: {
       head:text(r.head)?r.head:defaults.reactions.head, belly:text(r.belly)?r.belly:defaults.reactions.belly,
