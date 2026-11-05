@@ -5,6 +5,7 @@ import { ERAS } from '../types';
 import { cloudAvailable, getTeacherSession, publishData, teacherLogin, teacherLogout } from '../lib/cloud';
 import { downloadJson, isPinSet, parseBackup, setPin, verifyPin } from '../lib/storage';
 import { matchQuestion } from '../lib/matcher';
+import { reconcileEditedAnswer } from '../lib/dialogue';
 import AnswerAudioEditor from './AnswerAudioEditor';
 import SiteDesigner from './SiteDesigner';
 import PoseAvatarEditor from './PoseAvatarEditor';
@@ -78,9 +79,13 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPr
     const entry={...editingQuestion,question:editingQuestion.question.trim(),answerMS:editingQuestion.answerMS.trim(),
       alternatives:altText.split('\n').map(v=>v.trim()).filter(Boolean),keywords:keywordText.split(',').map(v=>v.trim()).filter(Boolean)};
     if(!entry.question||!entry.answerMS){setStatus('Sila isi soalan utama dan jawapan Bahasa Melayu.');return;}
-    const exists=data.questions.some(item=>item.id===entry.id);
-    onChange({...data,questions:exists?data.questions.map(v=>v.id===entry.id?entry:v):[...data.questions,entry]});
-    setEditingQuestion(null);setStatus('Soalan berjaya disimpan. Aki akan membaca jawapan baharu atau memainkan rakaman suara manusianya.');
+    const previous=data.questions.find(item=>item.id===entry.id);
+    const {value:saved,removedOutdatedRecording}=reconcileEditedAnswer(previous,entry);
+    onChange({...data,questions:previous?data.questions.map(v=>v.id===entry.id?saved:v):[...data.questions,saved]});
+    setEditingQuestion(null);
+    setStatus(removedOutdatedRecording
+      ?'Jawapan baharu berjaya disimpan. Rakaman lama telah dikeluarkan kerana masih menyebut jawapan sebelumnya. Muat naik MP3 baharu jika perlu.'
+      :'Soalan berjaya disimpan. Aki akan menggunakan jawapan terkini.');
   };
   const visibleQuestions=useMemo(()=>data.questions.filter(v=>(filter==='Semua'||v.era===filter) && [v.question,v.answerMS,...v.keywords].join(' ').toLowerCase().includes(term.toLowerCase())),[data.questions,filter,term]);
   const importJson=async(file:File)=>{
