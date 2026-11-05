@@ -39,3 +39,5 @@ export function orderedIndonesianVoices<T extends NamedVoice>(voices:T[],selecti
     return group(a)-group(b)||gender(a)-gender(b);
   });
 }
+
+export function isIndonesianVoice(lang:string):boolean{return /^id(?:[-_]|$)/i.test(lang);}
