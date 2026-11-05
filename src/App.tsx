@@ -84,6 +84,9 @@ export default function App(){
     alt="" aria-hidden="true" draggable={false}
     style={{left:item.left+'%',top:item.top+'%',width:item.width+'px',opacity:item.opacity/100}}/>:null;
   const overlay=site.backgroundOverlay/100;
+  // Keep the uploaded image as a real image layer, not a CSS background hidden behind
+  // the old gradient. This makes the photograph visible behind the Aki scene.
+  const backgroundPhoto=site.backgroundImage||dataSettings.backgroundImage;
   const themeVars={
     '--site-bg':site.backgroundColor,'--site-header':site.headerColor,
     '--site-chat':site.chatColor,'--site-bubble':site.bubbleColor,
@@ -92,9 +95,7 @@ export default function App(){
     '--site-width':site.maxWidth+'px','--site-radius':site.cornerRadius+'px',
     '--site-hero-pad':site.heroSpacing+'px',
     fontFamily:site.fontFamily+', Arial, sans-serif',
-    backgroundColor:site.backgroundColor,
-    ...(site.backgroundImage?{backgroundImage:'linear-gradient(rgba(255,255,255,'+overlay+'),rgba(255,255,255,'+overlay+')),url("'+site.backgroundImage+'")',
-      backgroundSize:'cover',backgroundPosition:site.backgroundPosition,backgroundAttachment:'fixed'}:{})
+    backgroundColor:site.backgroundColor
   } as CSSProperties;
   const hero=<section className="simple-hero" aria-labelledby="hero-title">
     {art(site.artLeft,'left')}{art(site.artRight,'right')}
@@ -142,6 +143,11 @@ export default function App(){
     {!voice.speechRecognitionSupported&&<p className="compatibility-note">Mikrofon tidak disokong pada pelayar ini. Kamu masih boleh menaip soalan.</p>}
   </section>;
   return <div className="app-shell simple-app custom-site" style={themeVars}>
+    {backgroundPhoto&&<div className="site-background-layer" aria-hidden="true">
+      <img src={backgroundPhoto} alt="" className="site-background-photo"
+        style={{objectPosition:site.backgroundPosition}} draggable={false}/>
+      {overlay>0&&<div className="site-background-tint" style={{backgroundColor:'rgba(255,255,255,'+overlay+')'}}/>}
+    </div>}
     {saveError&&<div className="save-error-banner" role="alert">{saveError}</div>}
     <header className="site-header simple-header">
       <div className="brand" aria-label="Kawan Prasejarah">
