@@ -399,3 +399,20 @@
 @media(prefers-reduced-motion:reduce){
   .custom-pose-avatar .pose-animated-hand{animation:none!important}
 }
+
+/* A single seamless canvas gently deforms the hand; no layer is cut or rotated.
+   Keep the full original wave photo as a fallback until canvas is ready. */
+.custom-pose-avatar .pose-wave-canvas{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 100ms ease-in;
+}
+.custom-pose-avatar .pose-wave-canvas.is-ready{opacity:1}
+.custom-pose-avatar .pose-animated-hand{display:none!important}
