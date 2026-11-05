@@ -1,9 +1,11 @@
 export type Era = 'Paleolitik' | 'Mesolitik' | 'Neolitik' | 'Logam';
 export const ERAS: Era[] = ['Paleolitik', 'Mesolitik', 'Neolitik', 'Logam'];
+export type KnowledgeEra=Era|'Perbandingan'|'Umum';
+export const KNOWLEDGE_ERAS:KnowledgeEra[]=[...ERAS,'Perbandingan','Umum'];
 
 export interface KnowledgeItem {
   id: string;
-  era: Era;
+  era: KnowledgeEra;
   question: string;
   alternatives: string[];
   keywords: string[];
@@ -12,6 +14,9 @@ export interface KnowledgeItem {
   audioMS?: string;
   answerZH?: string;
   enabled: boolean;
+  topic?:string;
+  evidence?:string;
+  source?:string;
 }
 
 export interface QuizItem {

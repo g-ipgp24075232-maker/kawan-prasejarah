@@ -23,3 +23,13 @@ describe('editable preset question matching',()=>{
     expect(matchQuestion('Di manakah manusia Zaman Paleolitik tinggal?',updated).item?.answerMS).toBe('Jawapan baharu daripada cikgu.');
   });
 });
+
+import {importedQuestions} from '../data/seed';
+it('matches each of the 1499 supplied question forms',()=>{
+ for(const item of importedQuestions){
+  for(const phrase of [item.question,...item.alternatives]){
+   const found=matchQuestion(phrase,importedQuestions);
+   expect(found.item?.id,`Wrong match: ${phrase}`).toBe(item.id);
+  }
+ }
+});

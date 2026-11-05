@@ -1,6 +1,7 @@
 import type { AppData, AvatarSettings, KnowledgeItem, QuizItem } from '../types';
-import { ERAS } from '../types';
+import { ERAS,KNOWLEDGE_ERAS } from '../types';
 import { initialData } from '../data/seed';
+import {KNOWLEDGE_BANK_VERSION,mergeImportedBank} from './knowledgeBank';
 import { validAnswerAudio } from './audio';
 import { safeImage,clamp } from './site';
 import { sanitizeSite } from './site';
@@ -20,9 +21,12 @@ export function parseBackup(source: string): AppData {
   if (input.questions.length > 3000 || input.quizzes.length > 3000) throw new Error('Terlalu banyak rekod dalam fail.');
   const questions: KnowledgeItem[] = input.questions.map((raw: unknown, index) => {
     if (!isRecord(raw) || !text(raw.id) || !text(raw.question) || !text(raw.answerMS) || !strings(raw.alternatives) || !strings(raw.keywords) ||
-      !ERAS.includes(raw.era as never) || typeof raw.enabled !== 'boolean') throw new Error(`Soalan ${index + 1} tidak sah.`);
+      !KNOWLEDGE_ERAS.includes(raw.era as never) || typeof raw.enabled !== 'boolean') throw new Error(`Soalan ${index + 1} tidak sah.`);
     return { id: raw.id.slice(0, 80), era: raw.era as KnowledgeItem['era'], question: raw.question.slice(0, 500),
       answerMS: raw.answerMS.slice(0, 2000), audioMS: validAnswerAudio(raw.audioMS) ? raw.audioMS : undefined, answerZH: text(raw.answerZH) ? raw.answerZH.slice(0, 2000) : '',
+      topic:text(raw.topic)?raw.topic.slice(0,120):undefined,
+      evidence:text(raw.evidence)?raw.evidence.slice(0,80):undefined,
+      source:text(raw.source)?raw.source.slice(0,400):undefined,
       alternatives: raw.alternatives.slice(0, 20).map(v => v.slice(0, 500)),
       keywords: raw.keywords.slice(0, 30).map(v => v.slice(0, 100)), enabled: raw.enabled };
   });
@@ -98,8 +102,17 @@ export function parseBackup(source: string): AppData {
 }
 
 export function getStoredData(): AppData | null {
-  try { const val = localStorage.getItem(STORAGE_KEY); return val ? parseBackup(val) : null; }
-  catch (e) { console.warn('Data simpanan tidak boleh dibaca:', e); return null; }
+ try{
+  const value=localStorage.getItem(STORAGE_KEY);
+  if(!value)return null;
+  const stored=parseBackup(value);
+  const marker=STORAGE_KEY+'-'+KNOWLEDGE_BANK_VERSION;
+  if(localStorage.getItem(marker)==='yes')return stored;
+  const upgraded=mergeImportedBank(stored);
+  try{persistData(upgraded);localStorage.setItem(marker,'yes');}
+  catch(e){console.warn('Ruang simpanan penuh; bank soalan dikemas kini dalam sesi ini:',e);}
+  return upgraded;
+ }catch(e){console.warn('Data simpanan tidak boleh dibaca:',e);return null;}
 }
 export function persistData(data: AppData): void { localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }
 export function hasStoredData(): boolean { return !!localStorage.getItem(STORAGE_KEY); }

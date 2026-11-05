@@ -1,9 +1,11 @@
 import type { AppData, Era, KnowledgeItem, QuizItem } from '../types';
 import { DEFAULT_SITE } from './site';
+import bank from './sosialEkonomiBank.json';
 
 const q = (id: string, era: Era, question: string, answerMS: string, alternatives: string[], keywords: string[], answerZH = ''): KnowledgeItem =>
   ({ id, era, question, answerMS, alternatives, keywords, answerZH, enabled: true });
 
+export const importedQuestions:KnowledgeItem[]=bank as KnowledgeItem[];
 export const seedQuestions: KnowledgeItem[] = [
   q('P001','Paleolitik','Di manakah manusia Zaman Paleolitik tinggal?','Manusia Zaman Paleolitik tinggal di gua dan kawasan terbuka.',['Manusia Paleolitik tinggal di mana?','Apakah tempat tinggal manusia Paleolitik?','Di mana orang Paleolitik berlindung?'],['paleolitik','tempat tinggal','gua','berlindung'],'旧石器时代的人类居住在洞穴和露天地区。'),
   q('P002','Paleolitik','Apakah makanan manusia Zaman Paleolitik?','Mereka mendapatkan makanan dengan memburu haiwan dan mengumpulkan hasil hutan.',['Apa yang dimakan oleh manusia Paleolitik?','Bagaimana manusia Paleolitik mendapat makanan?'],['paleolitik','makanan','memburu','buah']),
@@ -69,7 +71,7 @@ export const seedQuizzes: QuizItem[] = [
 export const initialData: AppData = {
   site: DEFAULT_SITE,
   version: 1,
-  questions: seedQuestions,
+  questions: [...importedQuestions,...seedQuestions],
   quizzes: seedQuizzes,
   settings: {
     name: 'Aki',

@@ -60,6 +60,12 @@ export function matchQuestion(input:string,items:KnowledgeItem[]):MatchResult {
   if(!clean)return {item:null,confidence:0,ambiguous:[]};
   const mentioned=ERAS.filter(era=>hasEra(clean,era));
   const active=items.filter(v=>v.enabled);
+  const withoutName=clean.replace(/^aki\s+/,'');
+  const direct=active.find(item=>[item.question,...item.alternatives].some(phrase=>{
+    const candidate=normalize(phrase);
+    return candidate===clean||candidate===withoutName||candidate.replace(/^aki\s+/,'')===withoutName;
+  }));
+  if(direct)return {item:direct,confidence:1,ambiguous:[]};
   const result=active.map(item=>{
     const variants=[item.question,...item.alternatives.filter(Boolean)];
     const best=Math.max(...variants.map(s=>similarity(input,s)));
@@ -67,7 +73,7 @@ export function matchQuestion(input:string,items:KnowledgeItem[]):MatchResult {
     const keyTerms=item.keywords.flatMap(tokenize).filter(word=>!ERAS.map(v=>v.toLowerCase()).includes(word));
     const keyword=keyTerms.length?terms.filter(t=>keyTerms.some(k=>fuzzyToken(t,k)>.8)).length / Math.max(1,Math.min(keyTerms.length,terms.length)):0;
     // The era is a strict condition if the pupil has mentioned one era explicitly.
-    const eraConflicts=mentioned.length===1 && item.era!==mentioned[0] && variants.every(v=>!hasEra(v,mentioned[0]));
+    const eraConflicts=mentioned.length===1 && item.era!=='Perbandingan' && item.era!=='Umum' && item.era!==mentioned[0] && variants.every(v=>!hasEra(v,mentioned[0]));
     const score=eraConflicts?0:Math.min(1,best*.9+keyword*.1+(mentioned.includes(item.era)? .02:0));
     return {item,score};
   }).sort((a,b)=>b.score-a.score);
