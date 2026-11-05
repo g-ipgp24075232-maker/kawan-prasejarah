@@ -7,6 +7,7 @@ import { downloadJson, isPinSet, parseBackup, setPin, verifyPin } from '../lib/s
 import { matchQuestion } from '../lib/matcher';
 import AnswerAudioEditor from './AnswerAudioEditor';
 import SiteDesigner from './SiteDesigner';
+import { prepareImage } from '../lib/imageTools';
 
 type Tab='questions'|'settings'|'design'|'backups'|'publish';
 interface Props {
@@ -20,18 +21,28 @@ interface Props {
 }
 const newQuestion=():KnowledgeItem=>({id:crypto.randomUUID(),era:'Paleolitik',question:'',alternatives:[],keywords:[],answerMS:'',answerZH:'',enabled:true});
 
-function UploadImage({label,onLoaded}: {label:string;onLoaded:(image:string)=>void}) {
+function UploadImage({label,image,onLoaded}: {label:string;image:string;onLoaded:(image:string)=>void}) {
   const [error,setError]=useState('');
-  return <label className="upload-card"><FileUp size={16}/><span>{label}</span>
-    <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={async event=>{
-      const file=event.target.files?.[0];event.target.value='';if(!file)return;
-      if(file.size>1_000_000){setError('Imej terlalu besar. Had 1 MB.');return;}
-      const reader=new FileReader();reader.onload=()=>{const result=reader.result;
-        if(typeof result==='string' && result.startsWith('data:image/')){onLoaded(result);setError('');}else setError('Format imej tidak disokong.');};
-      reader.onerror=()=>setError('Tidak dapat membaca imej.');reader.readAsDataURL(file);
-    }}/>
-    {error && <span className="small-error">{error}</span>}
-  </label>;
+  const [message,setMessage]=useState('');
+  const [loading,setLoading]=useState(false);
+  return <div className="upload-card upload-preview-card">
+    <strong>{label}</strong>
+    {image?<img className="designer-image-preview" src={image} alt={'Pratonton '+label}/>:<small>Tiada gambar lagi</small>}
+    <label className="upload-click"><FileUp size={16}/><span>{loading?'Memproses gambar…':'Muat Naik Gambar'}</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" onChange={async event=>{
+        const file=event.target.files?.[0];event.target.value='';if(!file)return;
+        setError('');setMessage('');setLoading(true);
+        try{
+          const prepared=await prepareImage(file,{maxDimension:1200,maxDataChars:350_000});
+          onLoaded(prepared.data);
+          setMessage(prepared.message+' Perubahan dapat dilihat pada halaman utama.');
+        }catch(error){setError(error instanceof Error?error.message:'Gambar tidak boleh digunakan.');}
+        finally{setLoading(false);}
+      }}/>
+    </label>
+    {message&&<small className="designer-success" role="status">{message}</small>}
+    {error&&<small className="small-error" role="alert">{error}</small>}
+  </div>;
 }
 
 export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPreview,voiceNames}:Props) {
@@ -131,7 +142,7 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPr
         <label>Kedudukan Melintang: {settings.horizontalOffset} px<input type="range" min="-160" max="160" value={settings.horizontalOffset} onChange={e=>updateSettings({horizontalOffset:Number(e.target.value)})}/></label><label>Warna Kulit<input type="color" value={settings.skinColor} onChange={e=>updateSettings({skinColor:e.target.value})}/></label><label>Warna Rambut<input type="color" value={settings.hairColor} onChange={e=>updateSettings({hairColor:e.target.value})}/></label><label>Warna Pakaian<input type="color" value={settings.clothingColor} onChange={e=>updateSettings({clothingColor:e.target.value})}/></label></div>
         <h4 className="teacher-subtitle">Kata-kata Reaksi</h4><div className="edit-grid">{(Object.keys(settings.reactions) as (keyof AvatarSettings['reactions'])[]).map(key=><label key={key}>Reaksi {key}<input value={settings.reactions[key]} onChange={e=>updateReaction(key,e.target.value)}/></label>)}</div>
         <h4 className="teacher-subtitle">Gambar & Lapisan Animasi</h4><p className="muted-copy">Imej penuh avatar bergerak sebagai satu gambar tanpa animasi mulut berasingan. Untuk animasi kepala, mulut dan tangan, muat naik setiap bahagian secara berlapis. Gambar hiasan dan latar halaman boleh disunting pada Reka Bentuk Laman.</p>
-        <div className="upload-grid"><UploadImage label="Gambar latar" onLoaded={image=>updateSettings({backgroundImage:image})}/><UploadImage label="Imej penuh avatar (statik)" onLoaded={image=>updateSettings({fullArtwork:image})}/>{(['head','torso','leftArm','rightArm','legs','mouth'] as ArtPart[]).map(v=><UploadImage key={v} label={`Lapisan ${v}`} onLoaded={image=>updateSettings({layers:{...settings.layers,[v]:image},fullArtwork:''})}/>)}</div><div className="form-actions"><button className="btn btn-soft" onClick={()=>updateSettings({backgroundImage:'',fullArtwork:'',layers:{}})}><RotateCcw size={16}/> Padam Semua Imej Muat Naik</button><button className="btn btn-soft" onClick={()=>onSay(settings.greeting)}><Volume2 size={16}/> Uji Ucapan</button></div>
+        <div className="upload-grid"><UploadImage label="Gambar latar halaman" image={data.site.backgroundImage} onLoaded={image=>onChange({...data,settings:{...settings,backgroundImage:image},site:{...data.site,backgroundImage:image,backgroundOverlay:15}})}/><UploadImage label="Imej penuh avatar (statik)" image={settings.fullArtwork} onLoaded={image=>updateSettings({fullArtwork:image,layers:{}})}/>{(['head','torso','leftArm','rightArm','legs','mouth'] as ArtPart[]).map(v=><UploadImage key={v} label={`Lapisan ${v}`} image={settings.layers[v]||''} onLoaded={image=>updateSettings({layers:{...settings.layers,[v]:image},fullArtwork:''})}/>)}</div><div className="form-actions"><button className="btn btn-soft" onClick={()=>onChange({...data,settings:{...settings,backgroundImage:'',fullArtwork:'',layers:{}},site:{...data.site,backgroundImage:''}})}><RotateCcw size={16}/> Padam Semua Imej Muat Naik</button><button className="btn btn-soft" onClick={()=>onSay(settings.greeting)}><Volume2 size={16}/> Uji Ucapan</button></div>
       </>}
       {tab==='backups'&&<><div className="section-heading"><div><h3>Data & Sandaran</h3><p>Jaga kandungan pembelajaran anda dengan salinan fail JSON.</p></div></div><div className="backup-grid"><div className="backup-card"><Download size={28}/><h4>Eksport JSON</h4><p>Muat turun semua soalan, rakaman dan tetapan ke komputer anda.</p><button className="btn btn-primary" onClick={()=>downloadJson(data)}><Download size={17}/> Eksport JSON</button></div><div className="backup-card"><FileUp size={28}/><h4>Import / Pulihkan JSON</h4><p>Pilih sandaran lama untuk menggantikan draf sedia ada.</p><button className="btn btn-soft" onClick={()=>fileInput.current?.click()}><FileUp size={17}/> Import JSON</button><input hidden type="file" ref={fileInput} accept="application/json,.json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(f)await importJson(f);}}/></div></div><div className="info-note"><ShieldCheck size={18}/><p><strong>Perhatian:</strong> perubahan setempat disimpan dalam pelayar/peranti ini sahaja. Eksport JSON untuk sandaran. Pada peranti lain, import fail yang sama atau gunakan Supabase dan terbitkan.</p></div></>}
       {tab==='publish'&&<><div className="section-heading"><div><h3>Terbitkan Ilmu Aki</h3><p>Tentukan apa yang dilihat oleh murid pada peranti lain.</p></div></div>
