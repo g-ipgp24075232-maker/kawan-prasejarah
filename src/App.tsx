@@ -75,7 +75,6 @@ export default function App(){
     voice.listen(value=>{ask(value);});
   };
   const stopAudio=()=>{voice.stopSpeaking();busyToken.current++;setAnimation('idle');};
-  const voiceNames=voice.voices.filter(v=>/^(ms|id)(?:-|_)/i.test(v.lang)).map(v=>({value:v.voiceURI,label:`${v.name} (${v.lang})`}));
   return <div className="app-shell simple-app" style={dataSettings.backgroundImage?{backgroundImage:'linear-gradient(180deg,rgba(250,253,242,.91),rgba(247,250,238,.91)),url("' + dataSettings.backgroundImage + '")',backgroundSize:'cover',backgroundPosition:'center'}:{}}>
     <header className="site-header simple-header">
       <div className="brand" aria-label="Kawan Prasejarah"><span className="brand-badge"><span>🪨</span></span><span className="brand-text"><strong>KAWAN <em>PRASEJARAH</em></strong><small>JOM BERBUAL DENGAN AKI!</small></span></div>
