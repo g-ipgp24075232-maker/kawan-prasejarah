@@ -153,6 +153,7 @@ export default function App(){
     {teacherOpen&&<TeacherPanel data={data} onChange={handleUpdate} onClose={()=>setTeacherOpen(false)}
       onSay={(message,audio)=>{setTeacherOpen(false);say(message,'talking',audio);}}
       onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}}
+      onPreview={()=>setTeacherOpen(false)}
       voiceNames={voice.voices.filter(v=>isIndonesianVoice(v.lang)).map(v=>({value:v.voiceURI,
         label:(voiceGender(v.name)==='female'?'Suara wanita • ':'Suara • ')+v.name+' ('+v.lang+')'}))}/>}
   </div>;
