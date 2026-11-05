@@ -2,6 +2,7 @@ import type { AppData, AvatarSettings, KnowledgeItem, QuizItem } from '../types'
 import { ERAS } from '../types';
 import { initialData } from '../data/seed';
 import { validAnswerAudio } from './audio';
+import { sanitizeSite } from './site';
 
 const STORAGE_KEY = 'kawan-prasejarah-draft-v1';
 const PIN_KEY = 'kawan-prasejarah-pin-v1';
@@ -72,7 +73,7 @@ export function parseBackup(source: string): AppData {
   }
   const ids = questions.map(item=>item.id);
   if (new Set(ids).size !== ids.length) throw new Error('ID soalan berulang.');
-  return {version:1,questions,quizzes,settings};
+  return {version:1,questions,quizzes,settings,site:sanitizeSite(input.site,settings.backgroundImage)};
 }
 
 export function getStoredData(): AppData | null {

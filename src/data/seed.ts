@@ -1,4 +1,5 @@
 import type { AppData, Era, KnowledgeItem, QuizItem } from '../types';
+import { DEFAULT_SITE } from './site';
 
 const q = (id: string, era: Era, question: string, answerMS: string, alternatives: string[], keywords: string[], answerZH = ''): KnowledgeItem =>
   ({ id, era, question, answerMS, alternatives, keywords, answerZH, enabled: true });
@@ -66,6 +67,7 @@ export const seedQuizzes: QuizItem[] = [
 ];
 
 export const initialData: AppData = {
+  site: DEFAULT_SITE,
   version: 1,
   questions: seedQuestions,
   quizzes: seedQuizzes,
