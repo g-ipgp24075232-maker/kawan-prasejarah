@@ -88,3 +88,25 @@
 .simple-chat .send-button{padding:10px}
 .simple-speech-actions button{font-size:11px}
 }
+
+
+/* Optional hand-wave interaction stays inside the single chat card. */
+.camera-wave-card{border:1px solid #e4ebdb;background:#f8fbf2;border-radius:17px;padding:14px 16px;margin-top:15px;display:flex;gap:10px;flex-direction:column;align-items:flex-start}
+.camera-wave-heading{display:flex;align-items:center;gap:10px;color:#466e49}
+.camera-wave-heading>div{display:flex;flex-direction:column;gap:2px}
+.camera-wave-heading strong{font-size:14px}
+.camera-wave-heading span{font-size:12px;color:#718269}
+.camera-start,.camera-stop{border-radius:22px;border:0;display:inline-flex;align-items:center;gap:8px;padding:9px 15px;font-size:13px;font-weight:800}
+.camera-start{background:#37774c;color:#fff}
+.camera-stop{background:#f2e7df;color:#904c39}
+.camera-loading{font-size:12px;display:flex;align-items:center;gap:7px;color:#607e63}
+.camera-loading svg{animation:camera-spin 1.2s linear infinite}
+@keyframes camera-spin{to{transform:rotate(360deg)}}
+.camera-preview{width:min(300px,100%);position:relative;aspect-ratio:4/3;overflow:hidden;border:3px solid #e2e9d8;background:#34453a;border-radius:15px}
+.camera-preview.camera-hidden{display:none}
+.camera-preview video{display:block;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.camera-indicator{position:absolute;bottom:9px;left:9px;right:9px;border-radius:14px;background:#374235dd;color:#fff;font-size:11px;font-weight:800;padding:5px 9px;text-align:center}
+.camera-indicator.detected{background:#2d7148dd}
+.camera-message{font-size:12px;font-weight:700;color:#52714d;margin:0}
+.camera-wave-card small{font-size:10px;line-height:1.55;color:#879184}
+@media(max-width:650px){.camera-wave-card{padding:12px}.camera-wave-heading strong{font-size:13px}.camera-wave-heading span{font-size:11px}}
