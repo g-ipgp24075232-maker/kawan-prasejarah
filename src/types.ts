@@ -29,9 +29,13 @@ export type AvatarPoses = Partial<Record<AvatarPose,string>>;
 export interface AvatarBlinkOptions {
   leftX:number; rightX:number; eyeY:number; eyeWidth:number; eyeHeight:number; color:string;
 }
+export interface AvatarMouthOptions {
+  x:number; y:number; width:number; height:number;
+}
 export interface AvatarSettings {
   poses: AvatarPoses;
   blink: AvatarBlinkOptions;
+  mouth: AvatarMouthOptions;
   name: string;
   greeting: string;
   unknownAnswer: string;

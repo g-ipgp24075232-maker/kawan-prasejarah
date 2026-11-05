@@ -1,12 +1,12 @@
 import type { Animation, AvatarPose } from '../types';
 
-/** One picture at a time: talking > waving > smiling. */
+/** Base photo stays fixed: smile normally, wave only when not talking.
+ * The talking photo is composited over ONLY the mouth, never swapped full-frame. */
 export function chooseAvatarPose(
   speaking:boolean,
   animation:Animation,
   available:Partial<Record<AvatarPose,string>>
 ):AvatarPose {
-  if(speaking && available.talk)return 'talk';
-  if(animation==='waving' && available.wave)return 'wave';
+  if(!speaking && animation==='waving' && available.wave)return 'wave';
   return 'idle';
 }

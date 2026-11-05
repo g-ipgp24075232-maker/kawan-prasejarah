@@ -2,19 +2,17 @@ import {expect,it} from 'vitest';
 import { chooseAvatarPose } from './avatarMotion';
 
 const images={idle:'smile.webp',talk:'mouth-open.webp',wave:'wave.webp'};
-it('shows smiling when idle, thinking or listening',()=>{
-  expect(chooseAvatarPose(false,'idle',images)).toBe('idle');
-  expect(chooseAvatarPose(false,'thinking',images)).toBe('idle');
-  expect(chooseAvatarPose(false,'listening',images)).toBe('idle');
+it('keeps smiling image behind moving mouth when speaking',()=>{
+  for(const action of ['talking','waving','confused','thinking'] as const)
+    expect(chooseAvatarPose(true,action,images)).toBe('idle');
 });
-it('shows the open mouth for the full duration of audio',()=>{
-  expect(chooseAvatarPose(true,'talking',images)).toBe('talk');
-  expect(chooseAvatarPose(true,'waving',images)).toBe('talk');
-  expect(chooseAvatarPose(true,'confused',images)).toBe('talk');
-});
-it('displays waving only when not speaking',()=>{
+it('shows waving picture when not speaking',()=>{
   expect(chooseAvatarPose(false,'waving',images)).toBe('wave');
 });
-it('falls back to smile if optional images are not uploaded',()=>{
-  expect(chooseAvatarPose(true,'talking',{idle:'smile.webp'})).toBe('idle');
+it('keeps smiling without audio or wave even if talk pose exists',()=>{
+  expect(chooseAvatarPose(false,'idle',images)).toBe('idle');
+  expect(chooseAvatarPose(false,'listening',images)).toBe('idle');
+});
+it('returns idle when wave pose has not been uploaded',()=>{
+  expect(chooseAvatarPose(false,'waving',{idle:'smile.webp'})).toBe('idle');
 });

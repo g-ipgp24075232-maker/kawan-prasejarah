@@ -41,6 +41,7 @@ export function parseBackup(source: string): AppData {
   const layers = isRecord(s.layers) ? s.layers : {};
   const poseInput=isRecord(s.poses)?s.poses:{};
   const blinkInput=isRecord(s.blink)?s.blink:{};
+  const mouthInput=isRecord(s.mouth)?s.mouth:{};
   const defaultBlink=defaults.blink;
   const settings: AvatarSettings = {
     name: str('name', defaults.name).slice(0,60),
@@ -53,13 +54,20 @@ export function parseBackup(source: string): AppData {
     backgroundImage: str('backgroundImage',''), skinColor: str('skinColor',defaults.skinColor), hairColor: str('hairColor',defaults.hairColor),
     clothingColor: str('clothingColor',defaults.clothingColor), fullArtwork:str('fullArtwork',''),
     poses:Object.fromEntries(['idle','talk','wave','blink'].map(key=>[key,safeImage(poseInput[key])])) as AvatarSettings['poses'],
+    mouth:{
+      x:clamp(mouthInput.x,15,85,defaults.mouth.x),
+      y:clamp(mouthInput.y,10,85,defaults.mouth.y),
+      width:clamp(mouthInput.width,4,28,defaults.mouth.width),
+      height:clamp(mouthInput.height,2,18,defaults.mouth.height)
+    },
     blink:{
       leftX:clamp(blinkInput.leftX,5,90,defaultBlink.leftX),
       rightX:clamp(blinkInput.rightX,5,95,defaultBlink.rightX),
       eyeY:clamp(blinkInput.eyeY,5,85,defaultBlink.eyeY),
       eyeWidth:clamp(blinkInput.eyeWidth,3,25,defaultBlink.eyeWidth),
       eyeHeight:clamp(blinkInput.eyeHeight,2,18,defaultBlink.eyeHeight),
-      color:typeof blinkInput.color==='string'&&/^#[a-f0-9]{6}$/i.test(blinkInput.color)?blinkInput.color:defaultBlink.color
+      color:typeof blinkInput.color==='string'&&/^#[a-f0-9]{6}$/i.test(blinkInput.color)
+        ?(blinkInput.color.toLowerCase()==='#f4b18b'?defaultBlink.color:blinkInput.color):defaultBlink.color
     },
     layers: Object.fromEntries(Object.entries(layers).filter(([k,v])=>['head','torso','leftArm','rightArm','legs','mouth'].includes(k) && text(v) && v.startsWith('data:image/'))) as AvatarSettings['layers'],
     reactions: {
