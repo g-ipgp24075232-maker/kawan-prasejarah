@@ -22,7 +22,7 @@ export const DEFAULT_SITE: SiteDesign={
   artChat:{...EMPTY_ART,left:93,top:25,width:116,opacity:35},
   backgroundColor:'#f5f9ee',headerColor:'#f5f9ee',chatColor:'#ffffff',
   bubbleColor:'#ffffff',accentColor:'#d18444',textColor:'#354b35',buttonColor:'#346c48',
-  backgroundOverlay:86,backgroundPosition:'center',
+  backgroundOverlay:15,backgroundPosition:'center',
   fontFamily:'Nunito',fontScale:100,maxWidth:880,cornerRadius:24,heroSpacing:13,
   showCamera:true,showTouchHint:true,showVoiceControls:true,chatFirst:false
 };

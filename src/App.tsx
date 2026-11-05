@@ -142,6 +142,7 @@ export default function App(){
     {!voice.speechRecognitionSupported&&<p className="compatibility-note">Mikrofon tidak disokong pada pelayar ini. Kamu masih boleh menaip soalan.</p>}
   </section>;
   return <div className="app-shell simple-app custom-site" style={themeVars}>
+    {saveError&&<div className="save-error-banner" role="alert">{saveError}</div>}
     <header className="site-header simple-header">
       <div className="brand" aria-label="Kawan Prasejarah">
         <span className="brand-badge">{site.brandLogoImage?<img className="site-brand-art" alt="" src={site.brandLogoImage}/>:<span>🪨</span>}</span>

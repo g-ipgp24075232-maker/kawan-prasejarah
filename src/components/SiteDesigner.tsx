@@ -119,7 +119,7 @@ export default function SiteDesigner({value,onChange,onPreview}:Props){
         <span>{item.label}</span><input type="color" value={String(value[item.key])}
           onChange={e=>set(item.key as 'backgroundColor',e.target.value)}/></label>)}</div>
       <h4>Gambar Latar</h4><ImagePicker label="Latar belakang halaman"
-        image={value.backgroundImage} onChange={image=>set('backgroundImage',image)}/>
+        image={value.backgroundImage} onChange={image=>onChange({...value,backgroundImage:image,backgroundOverlay:image?15:value.backgroundOverlay})}/>
       <div className="designer-form-grid"><label>Posisi gambar latar
         <select value={value.backgroundPosition} onChange={e=>set('backgroundPosition',e.target.value)}>
           <option value="center">Tengah</option><option value="top">Atas</option><option value="bottom">Bawah</option>
