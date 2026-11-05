@@ -27,3 +27,15 @@ export function voiceAvailabilityMessage(voice:NamedVoice):string {
   if(isMalaysianVoice(voice.lang))return '';
   return 'Suara wanita pada peranti ini menggunakan bahasa '+voice.lang+'. Teks masih dalam Bahasa Melayu Malaysia, tetapi sebutan mungkin tidak tepat. Gunakan rakaman guru untuk pertuturan Malaysia yang asli.';
 }
+
+/** Indonesian voice first; prefer female labels but do not silence unlabelled voices. */
+export function orderedIndonesianVoices<T extends NamedVoice>(voices:T[],selection:string):T[]{
+  const isID=(v:T)=>/^id(?:[-_]|$)/i.test(v.lang);
+  const group=(v:T)=>isID(v)?0:/^ms(?:[-_]|$)/i.test(v.lang)?1:2;
+  const gender=(v:T)=>voiceGender(v.name)==='female'?0:voiceGender(v.name)==='unknown'?1:2;
+  const selected=voices.find(v=>isID(v)&&v.voiceURI===selection);
+  return voices.slice().sort((a,b)=>{
+    if(selected){if(a.voiceURI===selected.voiceURI)return -1;if(b.voiceURI===selected.voiceURI)return 1;}
+    return group(a)-group(b)||gender(a)-gender(b);
+  });
+}

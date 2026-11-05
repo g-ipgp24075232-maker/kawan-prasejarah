@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { validAnswerAudio } from './audio';
-import { orderedFemaleVoices,voiceAvailabilityMessage } from './voiceChoice';
+import { orderedIndonesianVoices } from './voiceChoice';
 
 interface RecognitionResult { isFinal:boolean; 0:{transcript:string}; }
 interface RecognitionEvent { results:ArrayLike<RecognitionResult>; resultIndex:number; }
@@ -44,24 +44,31 @@ export function useVoice() {
   },[]);
   const stopAll=useCallback(()=>{stopSpeaking();stopListening();},[stopSpeaking,stopListening]);
 
-  /** Prefer a genuine teacher recording; otherwise use an installed Malay TTS voice. */
+  /** Prefer teacher recordings; otherwise use Indonesian browser speech. */
   const speak=useCallback((text:string,rate:number,selectedVoice:string,onEnd?:()=>void,recordedAudio?:string):boolean=>{
     stopSpeaking();
     if(muted){onEnd?.();return false;}
     const speakSynthetic=():boolean=>{
       if(!ttsSupported){setError('Peranti ini tidak menyokong suara automatik. Cikgu boleh memuat naik rakaman suara Bahasa Melayu Malaysia untuk jawapan ini.');onEnd?.();return false;}
       const allVoices=window.speechSynthesis.getVoices();
-      const candidates=orderedFemaleVoices(allVoices,selectedVoice);
+      const candidates=orderedIndonesianVoices(allVoices,selectedVoice);
+      // Browsers may initially expose no voices. Try their Indonesian default.
       if(!candidates.length){
-        setError('Tiada suara wanita yang dikenal pasti pada peranti ini. Dalam Mod Guru → Avatar, pilih dan uji suara yang tersedia atau muat naik rakaman wanita Bahasa Melayu Malaysia pada Bank Soalan. Aki tidak akan memilih suara lelaki secara automatik.');
-        onEnd?.();return false;
+        const utterance=new SpeechSynthesisUtterance(text);
+        utterance.lang='id-ID';utterance.rate=rate;utterance.pitch=1.06;
+        utterance.onstart=()=>{if(utteranceRef.current===utterance)setSpeaking(true);};
+        utterance.onend=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);onEnd?.();}};
+        utterance.onerror=()=>{if(utteranceRef.current===utterance){utteranceRef.current=null;setSpeaking(false);setError('Suara Bahasa Indonesia tidak dapat dimainkan. Cuba Chrome atau rakaman suara guru.');onEnd?.();}};
+        utteranceRef.current=utterance;setError('');
+        try{window.speechSynthesis.speak(utterance);return true;}
+        catch{utteranceRef.current=null;setError('Pelayar tidak dapat memainkan suara.');onEnd?.();return false;}
       }
       let index=0;
       const runNext=()=>{
         const chosen=candidates[index++];
         if(!chosen){
           setSpeaking(false);
-          setError('Suara wanita tidak dapat dimainkan. Cuba pilihan suara lain dalam Mod Guru atau gunakan rakaman wanita.');
+          setError('Suara tidak dapat dimainkan. Cuba pilihan lain dalam Mod Guru atau gunakan rakaman guru.');
           onEnd?.();return;
         }
         const utterance=new SpeechSynthesisUtterance(text);
@@ -77,7 +84,7 @@ export function useVoice() {
           runNext();
         };
         utteranceRef.current=utterance;
-        setError(voiceAvailabilityMessage(chosen));
+        setError(/^id(?:[-_]|$)/i.test(chosen.lang)?'':'Suara Bahasa Indonesia tidak tersedia; suara '+chosen.lang+' digunakan sebagai gantian. Sebutan mungkin berbeza.');
         try{window.speechSynthesis.speak(utterance);}
         catch{if(utteranceRef.current===utterance){utteranceRef.current=null;runNext();}}
       };
@@ -120,5 +127,5 @@ export function useVoice() {
     recognizer.onend=()=>{setListening(false);recognitionRef.current=null;};
     try{recognizer.start();recognitionRef.current=recognizer;setListening(true);}catch{setListening(false);setError('Mikrofon tidak dapat diaktifkan.');}
   },[stopListening]);
-  return {isListening,isSpeaking,muted,setMuted,voices,error,setError,speak,listen,stopSpeaking,stopListening,stopAll,ttsSupported,speechRecognitionSupported,hasMalayVoice:voices.some(v=>/^ms[-_]MY$/i.test(v.lang)),hasIndonesianVoice:false};
+  return {isListening,isSpeaking,muted,setMuted,voices,error,setError,speak,listen,stopSpeaking,stopListening,stopAll,ttsSupported,speechRecognitionSupported,hasMalayVoice:voices.some(v=>/^ms[-_]MY$/i.test(v.lang)),hasIndonesianVoice:voices.some(v=>/^id(?:[-_]|$)/i.test(v.lang))};
 }

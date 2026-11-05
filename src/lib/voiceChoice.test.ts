@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {voiceGender,orderedFemaleVoices,voiceAvailabilityMessage} from './voiceChoice';
+import {voiceGender,orderedFemaleVoices,orderedIndonesianVoices,voiceAvailabilityMessage} from './voiceChoice';
 const v=(name:string,lang:string,voiceURI=name)=>({name,lang,voiceURI});
 it('recognises labelled female and male voices conservatively',()=>{
   expect(voiceGender('Microsoft Yasmin Online (Natural)')).toBe('female');
@@ -19,4 +19,10 @@ it('only allows unlabelled voices when teacher explicitly chooses one',()=>{
 it('warns when fallback voice may mispronounce Malay',()=>{
   expect(voiceAvailabilityMessage(v('Zira','en-US'))).toMatch(/sebutan mungkin/);
   expect(voiceAvailabilityMessage(v('Yasmin','ms-MY'))).toBe('');
+});
+
+it('prefers Indonesian voices even when their gender is not named',()=>{
+  const voices=[v('Yasmin','ms-MY'),v('Google Bahasa Indonesia','id-ID')];
+  expect(orderedIndonesianVoices(voices,'Yasmin')[0].lang).toBe('id-ID');
+  expect(orderedIndonesianVoices([v('Google Bahasa Indonesia','id-ID')],'')).toHaveLength(1);
 });
