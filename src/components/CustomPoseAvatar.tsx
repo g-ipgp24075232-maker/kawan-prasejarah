@@ -49,7 +49,7 @@ export default function CustomPoseAvatar({settings,animation,speaking=false,onIn
   const waving=animation==='waving'&&!speaking;
   const b=settings.blink;
 
-  return <div className={'custom-pose-avatar pose-state-'+animation+(talking?' pose-speaking':'')} role="img"
+  return <div className={'custom-pose-avatar pose-state-'+animation+(speaking?' pose-speaking':'')} role="img"
       aria-label="Aki, watak kartun prasejarah yang boleh bercakap, berkelip mata dan melambai">
     <div className={'custom-pose-character'+(waving?' pose-waving':'')+(animation==='jumping'?' pose-jumping':'')}>
       <img className="custom-pose-image" src={portrait} alt="Aki" draggable={false}/>
