@@ -225,3 +225,18 @@
 .custom-site>.simple-header{z-index:15}
 .custom-site .simple-hero{background:transparent}
 .custom-site .simple-footer{background:transparent}
+
+/* Three-image Aki puppet: pictures share a standardized transparent frame. */
+.custom-site .custom-pose-avatar{width:100%;height:auto;aspect-ratio:364 / 521;position:relative;contain:layout;user-select:none}
+.custom-pose-avatar .custom-pose-character{position:absolute;inset:0;transform-origin:50% 82%}
+.custom-pose-avatar .custom-pose-image{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.custom-pose-avatar .pose-waving{animation:aki-custom-wave .55s ease-in-out infinite alternate}
+.custom-pose-avatar .pose-jumping{animation:aki-custom-jump .52s ease-in-out 2}
+.custom-pose-avatar .pose-eyelids{position:absolute;inset:0;pointer-events:none}
+.custom-pose-avatar .pose-eyelid{position:absolute;border:2px solid #63352d;border-top:0;border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset 0 -2px #794532}
+.custom-pose-avatar .pose-hit{position:absolute;z-index:3;border:0;padding:0;margin:0;background:transparent;cursor:pointer;border-radius:20px;touch-action:manipulation}
+.custom-pose-avatar .pose-hit:focus-visible{outline:2px dashed #e9a65d;outline-offset:-2px}
+.custom-site .simple-avatar .custom-pose-avatar{max-height:350px;max-width:100%;margin:0 auto}
+@keyframes aki-custom-wave{from{transform:rotate(-2deg)}to{transform:rotate(2.4deg)}}
+@keyframes aki-custom-jump{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+@media(prefers-reduced-motion:reduce){.custom-pose-avatar .pose-waving,.custom-pose-avatar .pose-jumping{animation:none}}

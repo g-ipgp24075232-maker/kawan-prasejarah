@@ -1,14 +1,16 @@
 import type { CSSProperties, KeyboardEvent } from 'react';
+import CustomPoseAvatar from './CustomPoseAvatar';
 import type { Animation, AvatarSettings } from '../types';
 
 type TouchArea='head'|'belly'|'leftHand'|'rightHand'|'feet'|'face';
 interface AvatarProps {
   animation:Animation;
   settings:AvatarSettings;
+  speaking?:boolean;
   onInteract:(area:TouchArea)=>void;
 }
 
-export default function Avatar({animation,settings,onInteract}:AvatarProps) {
+export default function Avatar({animation,settings,speaking=false,onInteract}:AvatarProps) {
   const style={
     '--skin':settings.skinColor,
     '--hair':settings.hairColor,
@@ -23,6 +25,7 @@ export default function Avatar({animation,settings,onInteract}:AvatarProps) {
       if(e.key==='Enter'||e.key===' '){e.preventDefault();onInteract(area);}
     }} onClick={e=>{e.stopPropagation();onInteract(area);}}
     className="avatar-hit" x={x} y={y} width={width} height={height} rx={rx} fill="transparent"/>;
+  if(settings.poses?.idle)return <CustomPoseAvatar settings={settings} animation={animation} speaking={speaking} onInteract={onInteract}/>;
   return <svg
     className={`prehistoric-avatar state-${animation}`}
     style={style}

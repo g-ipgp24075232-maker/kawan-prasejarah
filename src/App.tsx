@@ -108,7 +108,7 @@ export default function App(){
         <span className="bubble-label"><span className="little-dot"/> {formatCopy(site.bubbleCaption)}</span><p>{reply}</p><span className="bubble-tail"/></div>
       <div className="avatar-frame simple-avatar"
         style={{width:'min('+dataSettings.size+'px, 100%)',transform:'translateX('+dataSettings.horizontalOffset+'px)'}}>
-        <Avatar settings={dataSettings} animation={animation} onInteract={handleTouch}/>
+        <Avatar settings={dataSettings} animation={animation} speaking={voice.isSpeaking} onInteract={handleTouch}/>
       </div>
     </div>
     {site.showTouchHint&&<p className="simple-tap-note">{site.touchHint}</p>}
