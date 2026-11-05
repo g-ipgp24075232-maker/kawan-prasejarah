@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Check, CheckCircle2, CircleHelp, CloudUpload, Download, FileUp, KeyRound, LockKeyhole, LogOut, Mic2, Pencil, Play, Plus, RotateCcw, Save, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, Volume2, X } from 'lucide-react';
-import type { AppData, ArtPart, AvatarSettings, Era, KnowledgeItem, QuizItem } from '../types';
+import { ArrowLeft, BookOpen, Check, CheckCircle2, CloudUpload, Download, FileUp, KeyRound, LockKeyhole, LogOut, Mic2, Pencil, Play, Plus, RotateCcw, Save, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, Volume2, X } from 'lucide-react';
+import type { AppData, ArtPart, AvatarSettings, Era, KnowledgeItem } from '../types';
 import { ERAS } from '../types';
 import { cloudAvailable, getTeacherSession, publishData, teacherLogin, teacherLogout } from '../lib/cloud';
 import { downloadJson, isPinSet, parseBackup, setPin, verifyPin } from '../lib/storage';
 import { matchQuestion } from '../lib/matcher';
 import AnswerAudioEditor from './AnswerAudioEditor';
 
-type Tab='questions'|'quiz'|'settings'|'backups'|'publish';
+type Tab='questions'|'settings'|'backups'|'publish';
 interface Props {
   data:AppData;
   onChange:(next:AppData)=>void;
@@ -17,7 +17,6 @@ interface Props {
   voiceNames:{value:string,label:string}[];
 }
 const newQuestion=():KnowledgeItem=>({id:crypto.randomUUID(),era:'Paleolitik',question:'',alternatives:[],keywords:[],answerMS:'',answerZH:'',enabled:true});
-const newQuiz=():QuizItem=>({id:crypto.randomUUID(),era:'Paleolitik',question:'',options:['','','',''],correctIndex:0,explanation:''});
 
 function UploadImage({label,onLoaded}: {label:string;onLoaded:(image:string)=>void}) {
   const [error,setError]=useState('');
@@ -48,7 +47,6 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
   const [term,setTerm]=useState('');
   const [filter,setFilter]=useState<Era|'Semua'>('Semua');
   const [editingQuestion,setEditingQuestion]=useState<KnowledgeItem|null>(null);
-  const [editingQuiz,setEditingQuiz]=useState<QuizItem|null>(null);
   const [altText,setAltText]=useState('');
   const [keywordText,setKeywordText]=useState('');
   const [testQuestion,setTestQuestion]=useState('');
@@ -59,7 +57,6 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
   useEffect(()=>{if(cloudAvailable)getTeacherSession().then(valid=>{if(valid){setUnlocked(true);setOnlineAuth(true);}}).catch(()=>{});},[]);
   const updateSettings=useCallback((update:Partial<AvatarSettings>)=>onChange({...data,settings:{...data.settings,...update}}),[onChange,data]);
   const updateReaction=(key:keyof AvatarSettings['reactions'],value:string)=>updateSettings({reactions:{...settings.reactions,[key]:value}});
-  const changeDescription=(era:Era,value:string)=>updateSettings({eraDescriptions:{...settings.eraDescriptions,[era]:value}});
   const startEditingQuestion=(item:KnowledgeItem)=>{setEditingQuestion({...item,alternatives:[...item.alternatives],keywords:[...item.keywords]});setAltText(item.alternatives.join('\n'));setKeywordText(item.keywords.join(', '));};
   const saveQuestion=()=>{
     if(!editingQuestion)return;
@@ -70,18 +67,11 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
     onChange({...data,questions:exists?data.questions.map(v=>v.id===entry.id?entry:v):[...data.questions,entry]});
     setEditingQuestion(null);setStatus('Soalan berjaya disimpan. Aki akan membaca jawapan baharu atau memainkan rakaman suara manusianya.');
   };
-  const saveQuiz=()=>{
-    if(!editingQuiz)return;
-    if(!editingQuiz.question.trim()||editingQuiz.options.some(v=>!v.trim())){setStatus('Sila lengkapkan soalan dan empat pilihan jawapan.');return;}
-    const exists=data.quizzes.some(item=>item.id===editingQuiz.id);
-    onChange({...data,quizzes:exists?data.quizzes.map(v=>v.id===editingQuiz.id?editingQuiz:v):[...data.quizzes,editingQuiz]});
-    setEditingQuiz(null);setStatus('Kuiz berjaya disimpan.');
-  };
   const visibleQuestions=useMemo(()=>data.questions.filter(v=>(filter==='Semua'||v.era===filter) && [v.question,v.answerMS,...v.keywords].join(' ').toLowerCase().includes(term.toLowerCase())),[data.questions,filter,term]);
   const importJson=async(file:File)=>{
     try{const next=parseBackup(await file.text());
-      if(!window.confirm(`Pulihkan ${next.questions.length} soalan dan ${next.quizzes.length} kuiz? Ini menggantikan draf semasa.`))return;
-      onChange(next);setStatus('Sandaran JSON telah dipulihkan.');setEditingQuestion(null);setEditingQuiz(null);
+      if(!window.confirm(`Pulihkan ${next.questions.length} soalan? Ini menggantikan draf semasa.`))return;
+      onChange(next);setStatus('Sandaran JSON telah dipulihkan.');setEditingQuestion(null);
     }catch(error){setStatus(error instanceof Error?error.message:'Fail tidak sah.');}
   };
   const logout=async()=>{if(onlineAuth){try{await teacherLogout();}catch{/* local UI still locks */}}setUnlocked(false);setOnlineAuth(false);setPinValue('');setPassword('');};
@@ -107,10 +97,9 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
   </section></div>;
 
   return <div className="teacher-backdrop"><section className="teacher-panel" role="dialog" aria-modal="true" aria-label="Papan pemuka guru">
-    <header className="teacher-header"><div><span className="teacher-eyebrow"><ShieldCheck size={15}/> RUANG PENDIDIK</span><h2>Studio Guru <span>✦</span></h2><p>Ubah cerita, soalan dan suara Aki pada bila-bila masa.</p></div><div className="teacher-header-actions"><span className="mode-pill">{onlineAuth?'● Guru Dalam Talian':'● Simpanan Setempat'}</span><button className="icon-button" onClick={logout} title="Log keluar"><LogOut size={19}/></button><button className="icon-button" onClick={onClose} title="Tutup"><X size={23}/></button></div></header>
+    <header className="teacher-header"><div><span className="teacher-eyebrow"><ShieldCheck size={15}/> RUANG PENDIDIK</span><h2>Studio Guru <span>✦</span></h2><p>Urus soalan, jawapan dan suara Aki pada bila-bila masa.</p></div><div className="teacher-header-actions"><span className="mode-pill">{onlineAuth?'● Guru Dalam Talian':'● Simpanan Setempat'}</span><button className="icon-button" onClick={logout} title="Log keluar"><LogOut size={19}/></button><button className="icon-button" onClick={onClose} title="Tutup"><X size={23}/></button></div></header>
     <nav className="teacher-tabs" aria-label="Bahagian Mod Guru">
       <button className={tab==='questions'?'active':''} onClick={()=>{setTab('questions');setEditingQuestion(null);}}><BookOpen size={17}/> Bank Soalan</button>
-      <button className={tab==='quiz'?'active':''} onClick={()=>{setTab('quiz');setEditingQuiz(null);}}><CircleHelp size={17}/> Kuiz</button>
       <button className={tab==='settings'?'active':''} onClick={()=>setTab('settings')}><Settings2 size={17}/> Avatar</button>
       <button className={tab==='backups'?'active':''} onClick={()=>setTab('backups')}><Download size={17}/> Data & Sandaran</button>
       <button className={tab==='publish'?'active':''} onClick={()=>setTab('publish')}><CloudUpload size={17}/> Terbitkan</button>
@@ -133,18 +122,16 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,voic
           {testResult&&<div className="test-result"><p><strong>Padanan:</strong> {testResult.item?.question|| (testResult.ambiguous.length?'Beberapa soalan hampir sama':'Tiada padanan yang yakin')}</p><p><strong>Keyakinan:</strong> {Math.round(testResult.confidence*100)}% (anggaran skor padanan, bukan kebarangkalian)</p>{testResult.item&&<><p><strong>Jawapan:</strong> {testResult.item.answerMS}</p><div className="form-actions"><button className="btn btn-soft" onClick={()=>onSay(testResult.item!.answerMS,testResult.item!.audioMS)}><Volume2 size={16}/> Uji Suara</button><button className="btn btn-soft" onClick={onAnimate}><Play size={16}/> Uji Animasi</button></div></>}{testResult.ambiguous.length>0&&<p>Sila gunakan soalan yang lebih khusus: {testResult.ambiguous.map(v=>v.question).join(' / ')}</p>}</div>}
         </section>
       </>)}
-      {tab==='quiz' && (editingQuiz ? <div className="editor-content"><button className="text-back" onClick={()=>setEditingQuiz(null)}><ArrowLeft size={16}/> Kembali ke kuiz</button><h3>Edit Kuiz</h3><div className="edit-grid"><label>Kategori Zaman<select value={editingQuiz.era} onChange={e=>setEditingQuiz({...editingQuiz,era:e.target.value as Era})}>{ERAS.map(v=><option key={v}>{v}</option>)}</select></label><label>Soalan Kuiz<input value={editingQuiz.question} onChange={e=>setEditingQuiz({...editingQuiz,question:e.target.value})}/></label>{editingQuiz.options.map((option,index)=><label key={index}>Pilihan {String.fromCharCode(65+index)}<input value={option} onChange={e=>setEditingQuiz({...editingQuiz,options:editingQuiz.options.map((v,i)=>i===index?e.target.value:v) as QuizItem['options']})}/></label>)}<label>Jawapan Betul<select value={editingQuiz.correctIndex} onChange={e=>setEditingQuiz({...editingQuiz,correctIndex:Number(e.target.value)})}>{['A','B','C','D'].map((v,i)=><option key={i} value={i}>{v}</option>)}</select></label><label>Penjelasan<textarea rows={3} value={editingQuiz.explanation} onChange={e=>setEditingQuiz({...editingQuiz,explanation:e.target.value})}/></label></div><div className="form-actions"><button className="btn btn-primary" onClick={saveQuiz}><Save size={16}/> Simpan Kuiz</button><button className="btn btn-soft" onClick={()=>setEditingQuiz(null)}>Batal</button></div></div> : <><div className="section-heading"><div><h3>Soalan Kuiz Interaktif</h3><p>{data.quizzes.length} kuiz • Aki akan memberi reaksi kepada jawapan murid</p></div><button className="btn btn-primary" onClick={()=>setEditingQuiz(newQuiz())}><Plus size={17}/> Tambah Kuiz</button></div><div className="question-list">{data.quizzes.map(v=><article className="question-row" key={v.id}><div className="question-row-main"><span className="era-label">{v.era}</span><h4>{v.question}</h4><p>Jawapan: {String.fromCharCode(65+v.correctIndex)} — {v.options[v.correctIndex]}</p></div><div className="row-actions"><button onClick={()=>setEditingQuiz({...v,options:[...v.options] as QuizItem['options']})}><Pencil size={17}/></button><button title="Padam kuiz" onClick={()=>{if(window.confirm('Padam kuiz ini?'))onChange({...data,quizzes:data.quizzes.filter(item=>item.id!==v.id)});}}><Trash2 size={17}/></button></div></article>)}</div></>)}
       {tab==='settings'&&<><div className="section-heading"><div><h3>Personaliti & Rupa Aki</h3><p>Semua perubahan kelihatan serta-merta pada halaman utama.</p></div></div><div className="edit-grid"><label>Nama Avatar<input value={settings.name} onChange={e=>updateSettings({name:e.target.value})}/></label><label>Suara Pilihan<select value={settings.preferredVoice} onChange={e=>updateSettings({preferredVoice:e.target.value})}><option value="">Suara automatik terbaik tersedia</option>{voiceNames.map(v=><option key={v.value} value={v.value}>{v.label}</option>)}</select></label><label>Ucapan Selamat Datang<textarea rows={3} value={settings.greeting} onChange={e=>updateSettings({greeting:e.target.value})}/></label><label>Jawapan Jika Tidak Tahu<textarea rows={3} value={settings.unknownAnswer} onChange={e=>updateSettings({unknownAnswer:e.target.value})}/></label>
         <label>Kelajuan Suara: {settings.speechRate.toFixed(2)}×<input type="range" min="0.6" max="1.5" step="0.05" value={settings.speechRate} onChange={e=>updateSettings({speechRate:Number(e.target.value)})}/></label><label>Saiz Avatar: {settings.size} px<input type="range" min="270" max="580" value={settings.size} onChange={e=>updateSettings({size:Number(e.target.value)})}/></label>
         <label>Kedudukan Melintang: {settings.horizontalOffset} px<input type="range" min="-160" max="160" value={settings.horizontalOffset} onChange={e=>updateSettings({horizontalOffset:Number(e.target.value)})}/></label><label>Warna Kulit<input type="color" value={settings.skinColor} onChange={e=>updateSettings({skinColor:e.target.value})}/></label><label>Warna Rambut<input type="color" value={settings.hairColor} onChange={e=>updateSettings({hairColor:e.target.value})}/></label><label>Warna Pakaian<input type="color" value={settings.clothingColor} onChange={e=>updateSettings({clothingColor:e.target.value})}/></label></div>
         <h4 className="teacher-subtitle">Kata-kata Reaksi</h4><div className="edit-grid">{(Object.keys(settings.reactions) as (keyof AvatarSettings['reactions'])[]).map(key=><label key={key}>Reaksi {key}<input value={settings.reactions[key]} onChange={e=>updateReaction(key,e.target.value)}/></label>)}</div>
-        <h4 className="teacher-subtitle">Penerangan Empat Zaman</h4><div className="edit-grid">{ERAS.map(era=><label key={era}>Zaman {era}<textarea value={settings.eraDescriptions[era]} rows={3} onChange={e=>changeDescription(era,e.target.value)}/></label>)}</div>
         <h4 className="teacher-subtitle">Gambar & Lapisan Animasi</h4><p className="muted-copy">Imej penuh akan bergerak sebagai satu keping (tidak mempunyai artikulasi mulut). Untuk animasi bahagian badan, muat naik imej telus berasingan mengikut lapisan. Kekalkan avatar SVG asal untuk semua animasi wajah.</p>
         <div className="upload-grid"><UploadImage label="Gambar latar" onLoaded={image=>updateSettings({backgroundImage:image})}/><UploadImage label="Imej penuh avatar (statik)" onLoaded={image=>updateSettings({fullArtwork:image})}/>{(['head','torso','leftArm','rightArm','legs','mouth'] as ArtPart[]).map(v=><UploadImage key={v} label={`Lapisan ${v}`} onLoaded={image=>updateSettings({layers:{...settings.layers,[v]:image},fullArtwork:''})}/>)}</div><div className="form-actions"><button className="btn btn-soft" onClick={()=>updateSettings({backgroundImage:'',fullArtwork:'',layers:{}})}><RotateCcw size={16}/> Padam Semua Imej Muat Naik</button><button className="btn btn-soft" onClick={()=>onSay(settings.greeting)}><Volume2 size={16}/> Uji Ucapan</button></div>
       </>}
-      {tab==='backups'&&<><div className="section-heading"><div><h3>Data & Sandaran</h3><p>Jaga kandungan pembelajaran anda dengan salinan fail JSON.</p></div></div><div className="backup-grid"><div className="backup-card"><Download size={28}/><h4>Eksport JSON</h4><p>Muat turun semua soalan, kuiz dan tetapan ke komputer anda.</p><button className="btn btn-primary" onClick={()=>downloadJson(data)}><Download size={17}/> Eksport JSON</button></div><div className="backup-card"><FileUp size={28}/><h4>Import / Pulihkan JSON</h4><p>Pilih sandaran lama untuk menggantikan draf sedia ada.</p><button className="btn btn-soft" onClick={()=>fileInput.current?.click()}><FileUp size={17}/> Import JSON</button><input hidden type="file" ref={fileInput} accept="application/json,.json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(f)await importJson(f);}}/></div></div><div className="info-note"><ShieldCheck size={18}/><p><strong>Perhatian:</strong> perubahan setempat disimpan dalam pelayar/peranti ini sahaja. Eksport JSON untuk sandaran. Pada peranti lain, import fail yang sama atau gunakan Supabase dan terbitkan.</p></div></>}
+      {tab==='backups'&&<><div className="section-heading"><div><h3>Data & Sandaran</h3><p>Jaga kandungan pembelajaran anda dengan salinan fail JSON.</p></div></div><div className="backup-grid"><div className="backup-card"><Download size={28}/><h4>Eksport JSON</h4><p>Muat turun semua soalan, rakaman dan tetapan ke komputer anda.</p><button className="btn btn-primary" onClick={()=>downloadJson(data)}><Download size={17}/> Eksport JSON</button></div><div className="backup-card"><FileUp size={28}/><h4>Import / Pulihkan JSON</h4><p>Pilih sandaran lama untuk menggantikan draf sedia ada.</p><button className="btn btn-soft" onClick={()=>fileInput.current?.click()}><FileUp size={17}/> Import JSON</button><input hidden type="file" ref={fileInput} accept="application/json,.json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(f)await importJson(f);}}/></div></div><div className="info-note"><ShieldCheck size={18}/><p><strong>Perhatian:</strong> perubahan setempat disimpan dalam pelayar/peranti ini sahaja. Eksport JSON untuk sandaran. Pada peranti lain, import fail yang sama atau gunakan Supabase dan terbitkan.</p></div></>}
       {tab==='publish'&&<><div className="section-heading"><div><h3>Terbitkan Ilmu Aki</h3><p>Tentukan apa yang dilihat oleh murid pada peranti lain.</p></div></div>
-        <div className="publish-card"><div className="publish-art"><CloudUpload size={46}/></div><h4>{cloudAvailable?'Mod Penerbitan Dalam Talian Tersedia':'Mod Setempat Sedang Digunakan'}</h4><p>{cloudAvailable?'Terbitkan semua soalan, kuiz dan tetapan semasa ke Supabase. Perubahan akan kelihatan pada peranti lain yang memuatkan laman ini.':'Suntingan anda kini hanya disimpan di peranti ini. Untuk terbitan merentas peranti, sediakan projek Supabase mengikut README, kemudian masukkan pembolehubah persekitaran.'}</p>
+        <div className="publish-card"><div className="publish-art"><CloudUpload size={46}/></div><h4>{cloudAvailable?'Mod Penerbitan Dalam Talian Tersedia':'Mod Setempat Sedang Digunakan'}</h4><p>{cloudAvailable?'Terbitkan semua soalan dan tetapan semasa ke Supabase. Perubahan akan kelihatan pada peranti lain yang memuatkan laman ini.':'Suntingan anda kini hanya disimpan di peranti ini. Untuk terbitan merentas peranti, sediakan projek Supabase mengikut README, kemudian masukkan pembolehubah persekitaran.'}</p>
           <div className="form-actions"><button className="btn btn-primary" onClick={()=>{try{downloadJson(data);setStatus('Salinan draf telah dimuat turun.');}catch{setStatus('Gagal mengeksport JSON.');}}}><Save size={17}/> Simpan Draf / Eksport</button>
           <button className="btn btn-secondary" disabled={!cloudAvailable||!onlineAuth||busy} onClick={async()=>{setBusy(true);try{await publishData(data);setStatus('Berjaya diterbitkan! Buka semula laman pada peranti murid untuk menyemak kandungan.');}catch(e){setStatus(e instanceof Error?e.message:'Penerbitan gagal.');}finally{setBusy(false);}}}><CloudUpload size={17}/> {busy?'Menerbitkan...':'Terbitkan'}</button></div>
           {cloudAvailable&&!onlineAuth&&<p className="hint">Untuk menerbitkan, log keluar dan log masuk menggunakan akaun Guru Dalam Talian.</p>}
