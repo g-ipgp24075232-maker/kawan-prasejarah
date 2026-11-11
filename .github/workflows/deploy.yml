@@ -32,5 +32,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+      # GitHub's artifact API occasionally takes a moment to index uploaded files.
+      # Delay avoids "0 artifacts" when deploy-pages runs immediately afterward.
+      - name: Allow Pages artifact indexing
+        run: sleep 15
       - id: deployment
         uses: actions/deploy-pages@v4
