@@ -2,6 +2,7 @@ import type { AppData, AvatarSettings, KnowledgeItem, QuizItem } from '../types'
 import { ERAS,KNOWLEDGE_ERAS } from '../types';
 import { initialData } from '../data/seed';
 import {KNOWLEDGE_BANK_VERSION,mergeImportedBank} from './knowledgeBank';
+import { migrateAkiNarration } from './akiNarration';
 import { validAnswerAudio } from './audio';
 import { safeImage,clamp } from './site';
 import { sanitizeSite } from './site';
@@ -107,9 +108,9 @@ export function getStoredData(): AppData | null {
   if(!value)return null;
   const stored=parseBackup(value);
   const marker=STORAGE_KEY+'-'+KNOWLEDGE_BANK_VERSION;
-  if(localStorage.getItem(marker)==='yes')return stored;
-  const upgraded=mergeImportedBank(stored);
-  try{persistData(upgraded);localStorage.setItem(marker,'yes');}
+  const enriched=localStorage.getItem(marker)==='yes'?stored:mergeImportedBank(stored);
+  const upgraded=migrateAkiNarration(enriched);
+  try{if(upgraded!==stored)persistData(upgraded);localStorage.setItem(marker,'yes');}
   catch(e){console.warn('Ruang simpanan penuh; bank soalan dikemas kini dalam sesi ini:',e);}
   return upgraded;
  }catch(e){console.warn('Data simpanan tidak boleh dibaca:',e);return null;}

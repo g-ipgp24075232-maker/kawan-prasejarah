@@ -2,9 +2,10 @@ import type { AppData, Era, KnowledgeItem, QuizItem } from '../types';
 import { DEFAULT_SITE } from './site';
 import bank from './sosialEkonomiBank.json';
 import publicAki from './akiPublicPack.json';
+import akiSeedAnswers from './akiSeedAnswers.json';
 
 const q = (id: string, era: Era, question: string, answerMS: string, alternatives: string[], keywords: string[], answerZH = ''): KnowledgeItem =>
-  ({ id, era, question, answerMS, alternatives, keywords, answerZH, enabled: true });
+  ({ id, era, question, answerMS:akiSeedAnswers[id as keyof typeof akiSeedAnswers]??answerMS, alternatives, keywords, answerZH, enabled: true });
 
 export const importedQuestions:KnowledgeItem[]=bank as KnowledgeItem[];
 export const seedQuestions: KnowledgeItem[] = [
