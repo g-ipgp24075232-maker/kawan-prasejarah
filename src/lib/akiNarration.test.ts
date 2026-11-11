@@ -5,7 +5,7 @@ import old from '../data/previousAnswers.json';
 it('all 553 published default answers have Aki dialogue voice',()=>{
  expect(initialData.questions).toHaveLength(553);
  for(const item of initialData.questions){
-  expect(item.answerMS).toMatch(/\\b(saya|kita|jom|mari|kawan|awak|kamu)\\b/i);
+  expect(item.answerMS).toMatch(/\b(saya|kita|jom|mari|kawan|awak|kamu)\b/i);
   expect(item.answerMS.toLowerCase()).not.toContain('buku teks');
  }
 });
