@@ -3,7 +3,8 @@ import { ArrowLeft, BookOpen, Check, CheckCircle2, CloudUpload, Download, FileUp
 import type { AppData, ArtPart, AvatarSettings, KnowledgeEra, KnowledgeItem } from '../types';
 import { KNOWLEDGE_ERAS } from '../types';
 import { cloudAvailable, getTeacherSession, publishData, teacherLogin, teacherLogout } from '../lib/cloud';
-import { downloadJson, isPinSet, parseBackup, setPin, verifyPin } from '../lib/storage';
+import { downloadJson, getStoredData, isPinSet, parseBackup, setPin, verifyPin } from '../lib/storage';
+import { downloadForGitHub,GITHUB_PUBLIC_DIRECTORY } from '../lib/publication';
 import { matchQuestion } from '../lib/matcher';
 import { reconcileEditedAnswer } from '../lib/dialogue';
 import AnswerAudioEditor from './AnswerAudioEditor';
@@ -19,6 +20,8 @@ interface Props {
   onSay:(value:string,audio?:string)=>void;
   onAnimate:()=>void;
   onPreview:()=>void;
+  onRestoreDraft:()=>boolean;
+  onPublicationComplete:()=>void;
   onTestWave:()=>void;
   voiceNames:{value:string,label:string}[];
 }
@@ -48,7 +51,7 @@ function UploadImage({label,image,onLoaded}: {label:string;image:string;onLoaded
   </div>;
 }
 
-export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPreview,onTestWave,voiceNames}:Props) {
+export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPreview,onRestoreDraft,onPublicationComplete,onTestWave,voiceNames}:Props) {
   const [unlocked,setUnlocked]=useState(false);
   const [onlineAuth,setOnlineAuth]=useState(false);
   const [localChoice,setLocalChoice]=useState(!cloudAvailable);
@@ -153,12 +156,45 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPr
         <div className="upload-grid"><UploadImage label="Gambar latar halaman" image={data.site.backgroundImage} onLoaded={image=>onChange({...data,settings:{...settings,backgroundImage:image},site:{...data.site,backgroundImage:image,backgroundOverlay:15}})}/><UploadImage label="Imej penuh avatar (statik)" image={settings.fullArtwork} onLoaded={image=>updateSettings({fullArtwork:image,layers:{}})}/>{(['head','torso','leftArm','rightArm','legs','mouth'] as ArtPart[]).map(v=><UploadImage key={v} label={`Lapisan ${v}`} image={settings.layers[v]||''} onLoaded={image=>updateSettings({layers:{...settings.layers,[v]:image},fullArtwork:''})}/>)}</div><div className="form-actions"><button className="btn btn-soft" onClick={()=>onChange({...data,settings:{...settings,backgroundImage:'',fullArtwork:'',layers:{}},site:{...data.site,backgroundImage:''}})}><RotateCcw size={16}/> Padam Semua Imej Muat Naik</button><button className="btn btn-soft" onClick={()=>onSay(settings.greeting)}><Volume2 size={16}/> Uji Ucapan</button></div>
       </>}
       {tab==='backups'&&<><div className="section-heading"><div><h3>Data & Sandaran</h3><p>Jaga kandungan pembelajaran anda dengan salinan fail JSON.</p></div></div><div className="backup-grid"><div className="backup-card"><Download size={28}/><h4>Eksport JSON</h4><p>Muat turun semua soalan, rakaman dan tetapan ke komputer anda.</p><button className="btn btn-primary" onClick={()=>downloadJson(data)}><Download size={17}/> Eksport JSON</button></div><div className="backup-card"><FileUp size={28}/><h4>Import / Pulihkan JSON</h4><p>Pilih sandaran lama untuk menggantikan draf sedia ada.</p><button className="btn btn-soft" onClick={()=>fileInput.current?.click()}><FileUp size={17}/> Import JSON</button><input hidden type="file" ref={fileInput} accept="application/json,.json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(f)await importJson(f);}}/></div></div><div className="info-note"><ShieldCheck size={18}/><p><strong>Perhatian:</strong> perubahan setempat disimpan dalam pelayar/peranti ini sahaja. Eksport JSON untuk sandaran. Pada peranti lain, import fail yang sama atau gunakan Supabase dan terbitkan.</p></div></>}
-      {tab==='publish'&&<><div className="section-heading"><div><h3>Terbitkan Ilmu Aki</h3><p>Tentukan apa yang dilihat oleh murid pada peranti lain.</p></div></div>
-        <div className="publish-card"><div className="publish-art"><CloudUpload size={46}/></div><h4>{cloudAvailable?'Mod Penerbitan Dalam Talian Tersedia':'Mod Setempat Sedang Digunakan'}</h4><p>{cloudAvailable?'Terbitkan semua soalan dan tetapan semasa ke Supabase. Perubahan akan kelihatan pada peranti lain yang memuatkan laman ini.':'Suntingan anda kini hanya disimpan di peranti ini. Untuk terbitan merentas peranti, sediakan projek Supabase mengikut README, kemudian masukkan pembolehubah persekitaran.'}</p>
-          <div className="form-actions"><button className="btn btn-primary" onClick={()=>{try{downloadJson(data);setStatus('Salinan draf telah dimuat turun.');}catch{setStatus('Gagal mengeksport JSON.');}}}><Save size={17}/> Simpan Draf / Eksport</button>
-          <button className="btn btn-secondary" disabled={!cloudAvailable||!onlineAuth||busy} onClick={async()=>{setBusy(true);try{await publishData(data);setStatus('Berjaya diterbitkan! Buka semula laman pada peranti murid untuk menyemak kandungan.');}catch(e){setStatus(e instanceof Error?e.message:'Penerbitan gagal.');}finally{setBusy(false);}}}><CloudUpload size={17}/> {busy?'Menerbitkan...':'Terbitkan'}</button></div>
-          {cloudAvailable&&!onlineAuth&&<p className="hint">Untuk menerbitkan, log keluar dan log masuk menggunakan akaun Guru Dalam Talian.</p>}
-        </div></>}
+      {tab==='publish'&&<><div className="section-heading"><div>
+        <h3>Terbitkan untuk Semua Peranti</h3>
+        <p>Bezakan draf yang hanya disimpan pada komputer dengan kandungan yang dibuka oleh murid.</p>
+      </div></div>
+      <div className="publish-card">
+        <div className="publish-art"><CloudUpload size={46}/></div>
+        <h4>Versi Umum & Draf Guru</h4>
+        <p>Perubahan dalam Mod Guru ialah draf setempat. Untuk murid melihat gambar Aki, latar, dialog dan soalan yang sama pada telefon atau komputer lain, cikgu perlu menerbitkan draf.</p>
+        <div className="form-actions">
+          <button className="btn btn-soft" onClick={()=>{
+            if(getStoredData()&&window.confirm('Buka semula suntingan setempat? Ini akan menggantikan pratonton semasa, bukan versi umum.')){
+              if(onRestoreDraft())setStatus('Draf setempat dibuka. Semak dan terbitkan untuk berkongsi.');
+            }else if(!getStoredData())setStatus('Tiada draf setempat pada peranti ini.');
+          }}><Pencil size={17}/> Buka Draf Setempat</button>
+          <button className="btn btn-secondary" onClick={()=>{
+            try{downloadJson(data);setStatus('Salinan draf telah dimuat turun.');}
+            catch{setStatus('Gagal mengeksport draf.');}
+          }}><Save size={17}/> Sandaran JSON</button>
+        </div>
+        {cloudAvailable?<div className="info-note">
+          <ShieldCheck size={18}/><p><strong>Penerbitan satu klik:</strong> Log masuk sebagai Guru Dalam Talian, kemudian tekan Terbitkan. Murid akan menerima versi Supabase yang terkini.</p>
+        </div>:<div className="info-note">
+          <ShieldCheck size={18}/><p><strong>Penerbitan percuma melalui GitHub:</strong> Muat turun fail terbitan, kemudian muat naik fail bernama <code>published-site.json</code> ke folder <code>public</code> repositori GitHub. Selepas Commit dan GitHub Pages berjaya deploy, semua peranti boleh membaca versi yang sama.</p>
+        </div>}
+        {cloudAvailable&&<button className="btn btn-primary" disabled={!onlineAuth||busy} onClick={async()=>{
+          setBusy(true);
+          try{await publishData(data);onPublicationComplete();setStatus('Berjaya diterbitkan! Murid melihat versi baharu dari Supabase.');}
+          catch(e){setStatus(e instanceof Error?e.message:'Penerbitan gagal.');}
+          finally{setBusy(false);}
+        }}><CloudUpload size={17}/> {busy?'Menerbitkan...':'Terbitkan Sekarang'}</button>}
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={()=>{
+            downloadForGitHub(data);
+            setStatus('Fail published-site.json telah dimuat turun. Ia belum diterbitkan: muat naik fail ke GitHub dan Commit Changes.');
+          }}><Download size={17}/> 1. Muat Turun Fail Terbitan</button>
+          <a className="btn btn-soft" href={GITHUB_PUBLIC_DIRECTORY} target="_blank" rel="noreferrer"><CloudUpload size={17}/> 2. Buka Folder GitHub</a>
+        </div>
+        <p className="hint">3. Upload fail published-site.json → Commit changes → semak GitHub Actions → muat semula laman pada peranti murid. Jangan terbitkan kata laluan, kunci API atau data peribadi murid.</p>
+      </div></>}
     </div>
     <footer className="teacher-footer"><span><Check size={15}/> Perubahan disimpan secara automatik pada peranti</span><button className="btn btn-soft" onClick={onClose}>Selesai & Kembali <ArrowLeft size={16}/></button></footer>
   </section></div>;

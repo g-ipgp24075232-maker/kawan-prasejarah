@@ -9,13 +9,16 @@ import { fetchPublished, cloudAvailable, subscribePublished } from './lib/cloud'
 import { matchQuestion } from './lib/matcher';
 import { resolveDialogue, type DialogueSource } from './lib/dialogue';
 import { getStoredData, persistData } from './lib/storage';
+import { fetchGitHubPublished } from './lib/publication';
 import { useVoice } from './lib/speech';
 import { voiceGender,isIndonesianVoice } from './lib/voiceChoice';
 import type { Animation, AppData, SiteArt } from './types';
 
 type TouchArea='head'|'belly'|'leftHand'|'rightHand'|'feet'|'face';
 export default function App(){
-  const [data,setData]=useState<AppData>(()=>getStoredData()??initialData);
+  // Public visitors use the same published snapshot, not private localStorage
+  // left by an old teacher session on the device.
+  const [data,setData]=useState<AppData>(()=>initialData);
   const [saveError,setSaveError]=useState('');
   const [input,setInput]=useState('');
   const [currentQuestion,setCurrentQuestion]=useState('');
@@ -30,16 +33,44 @@ export default function App(){
   const busyToken=useRef(0);
   const replySource=useRef<DialogueSource>({kind:'greeting'});
   const replyText=useRef(data.settings.greeting);
+  const editingDraft=useRef(false);
+  const refreshInFlight=useRef(false);
   const dataSettings=data.settings;
   const site=data.site;
   useEffect(()=>{
-    if(!cloudAvailable || getStoredData())return;
-    let ignore=false;
-    const unsubscribe=subscribePublished(published=>{if(!ignore){setData(published);setCloudNote('Guru telah menerbitkan kandungan baharu secara langsung.');}});
-    fetchPublished().then(published=>{
-      if(!ignore&&published){setData(published);replySource.current={kind:'greeting'};replyText.current=published.settings.greeting;setReply(published.settings.greeting);setCloudNote('Kandungan terbitan guru berjaya dimuatkan.');}
-    }).catch(()=>{if(!ignore)setCloudNote('Kandungan setempat digunakan. Sambungan dalam talian belum tersedia.');});
-    return ()=>{ignore=true;unsubscribe();};
+    let stopped=false;
+    const showPublic=(published:AppData)=>{
+      if(stopped||editingDraft.current)return;
+      setData(published);
+      if(replySource.current.kind==='greeting'){
+        replyText.current=published.settings.greeting;
+        setReply(published.settings.greeting);
+      }
+    };
+    const refresh=async()=>{
+      if(refreshInFlight.current||editingDraft.current)return;
+      refreshInFlight.current=true;
+      try{
+        // Online teacher publishing takes precedence; static GitHub publication
+        // is the free fallback when Supabase is not configured.
+        let published:AppData|null=null;
+        if(cloudAvailable){
+          try{published=await fetchPublished();}catch(e){console.warn('Sambungan penerbitan gagal:',e);}
+        }
+        if(!published)published=await fetchGitHubPublished();
+        if(published){showPublic(published);setCloudNote('Versi terbitan terkini telah dimuatkan.');}
+      }catch(e){console.warn('Gagal menyemak data terbitan:',e);}
+      finally{refreshInFlight.current=false;}
+    };
+    void refresh();
+    const unsubscribe=cloudAvailable?subscribePublished(published=>{
+      showPublic(published);setCloudNote('Kandungan guru terkini telah dimuatkan.');
+    }):()=>{};
+    const onFocus=()=>{void refresh();};
+    document.addEventListener('visibilitychange',onFocus);
+    window.addEventListener('focus',onFocus);
+    return ()=>{stopped=true;unsubscribe();document.removeEventListener('visibilitychange',onFocus);
+      window.removeEventListener('focus',onFocus);};
   },[]);
   useEffect(()=>()=>{timers.current.forEach(clearTimeout);voice.stopAll();},[]); // teardown when leaving page
   const later=useCallback((fn:()=>void,ms:number)=>{const t=setTimeout(fn,ms);timers.current.push(t);},[]);
@@ -85,6 +116,7 @@ export default function App(){
     say(dataSettings.reactions[area],reacts[area],undefined,{kind:'reaction',area});
   },[dataSettings.reactions,say,waveThenSpeak]);
   const handleUpdate=useCallback((next:AppData)=>{
+    editingDraft.current=true;
     // Match the visible bubble to its original source so edits show immediately,
     // without resetting the pupil's currently displayed question to a greeting.
     const changedGreeting=data.settings.greeting!==next.settings.greeting;
@@ -197,6 +229,21 @@ export default function App(){
         say(message,'talking',audio,source);}}
       onAnimate={()=>{setTeacherOpen(false);busyToken.current++;setAnimation('happy');later(()=>setAnimation('idle'),1700);}}
       onPreview={()=>setTeacherOpen(false)}
+      onRestoreDraft={()=>{
+        const saved=getStoredData();
+        if(!saved)return false;
+        editingDraft.current=true;
+        setData(saved);
+        replySource.current={kind:'greeting'};
+        replyText.current=saved.settings.greeting;
+        setReply(saved.settings.greeting);
+        setCloudNote('Draf setempat dibuka untuk suntingan. Belum diterbitkan kepada murid.');
+        return true;
+      }}
+      onPublicationComplete={()=>{
+        editingDraft.current=false;
+        setCloudNote('Kandungan baharu telah diterbitkan untuk peranti lain.');
+      }}
       onTestWave={()=>{
         setTeacherOpen(false);
         voice.stopSpeaking();

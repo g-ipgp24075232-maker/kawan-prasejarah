@@ -106,3 +106,12 @@ Aki **boleh bercakap kuat**, bukan hanya memaparkan teks.
 ## Bahasa Indonesia (suara asal dipulihkan)
 
 Aki memakai suara automatik Bahasa Indonesia (`id-ID`) sebagai pilihan pertama. Teks pembelajaran dan jawapan kekal Bahasa Melayu Malaysia. Jika beberapa suara Indonesia tersedia, suara wanita yang dapat dikenal pasti diutamakan, tetapi suara Indonesia tanpa label jantina tetap dibenarkan supaya Aki tidak senyap. Guru boleh memilih dan menguji suara melalui Mod Guru → Avatar. Jika tiada suara Indonesia, suara peranti lain digunakan dengan amaran tentang sebutan. Rakaman guru sentiasa dimainkan terlebih dahulu. Wajah dan animasi avatar perempuan dikekalkan.
+
+
+## Cross-device publishing (fixed)
+
+The public site always reads the same shared published document. With Supabase configured, it uses the latest authenticated publication; otherwise it reads `public/published-site.json` from GitHub Pages. Existing browser `localStorage` values no longer silently override the published site for pupils, including after a refresh. To recover unpublished teacher changes, open **Mod Guru → Terbitkan → Buka Draf Setempat**.
+
+**Free GitHub workflow (no backend required)**: After editing, use **Mod Guru → Terbitkan → Muat Turun Fail Terbitan** and upload the resulting `published-site.json` to the repository's `public/` folder at [GitHub's upload page](https://github.com/g-ipgp24075232-maker/kawan-prasejarah/upload/main/public). Commit the file and ensure GitHub Actions finishes. Every device loads the same latest public JSON on page reload/focus; the interface avoids cached copies with a cache-busting query. This is a deliberate publishing step—not instant auto-save to a static host.
+
+**One-click future updates**: Configure the existing secure Supabase integration in `supabase/schema.sql` and GitHub repository Actions Variables, sign in as an authorized teacher, edit and click **Terbitkan Sekarang**. Never put GitHub tokens, Supabase service-role keys, or secret passwords into client-side code or JSON.
