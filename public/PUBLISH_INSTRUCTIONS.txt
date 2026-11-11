@@ -1,0 +1,19 @@
+KAWAN PRASEJARAH - PENERBITAN MERENTAS PERANTI
+================================================
+Fail ini mengekalkan folder "public" di GitHub.
+
+Untuk terbitkan kandungan cikgu (gambar Aki, latar, dialog dan soalan)
+supaya SEMUA peranti melihat versi yang sama:
+
+1. Pada laman Kawan Prasejarah, buka Mod Guru > Terbitkan.
+2. Tekan "Muat Turun Fail Terbitan".
+3. Buka github.com/g-ipgp24075232-maker/kawan-prasejarah/upload/main/public
+4. Muat naik "published-site.json" ke folder public.
+   Jika nama fail sudah wujud, GANTIKAN kandungannya.
+5. Commit changes. GitHub Actions akan membina dan menerbitkan laman.
+6. Muat semula laman pada peranti lain.
+
+Fail "published-site.json" ialah data TERBITAN. Jangan masukkan
+maklumat peribadi murid atau kunci API rahsia di dalamnya.
+Untuk terbit satu klik, gunakan Supabase dengan guru login + RLS
+seperti diterangkan dalam README.md.
