@@ -1,6 +1,7 @@
 import type { AppData, Era, KnowledgeItem, QuizItem } from '../types';
 import { DEFAULT_SITE } from './site';
 import bank from './sosialEkonomiBank.json';
+import publicAki from './akiPublicPack.json';
 
 const q = (id: string, era: Era, question: string, answerMS: string, alternatives: string[], keywords: string[], answerZH = ''): KnowledgeItem =>
   ({ id, era, question, answerMS, alternatives, keywords, answerZH, enabled: true });
@@ -94,7 +95,7 @@ export const initialData: AppData = {
     hairColor: '#553325',
     clothingColor: '#ad7957',
     fullArtwork: '',
-    poses: {},
+    poses: {idle:publicAki.poses.idle,talk:publicAki.poses.talk,wave:publicAki.poses.wave},
     blink: {leftX:38.7,rightX:58.9,eyeY:31.6,eyeWidth:9,eyeHeight:6.8,color:'#fac29d'},
     mouth: {x:50,y:39.8,width:13,height:6.8},
     layers: {},
