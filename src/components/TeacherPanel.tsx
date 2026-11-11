@@ -188,11 +188,20 @@ export default function TeacherPanel({data,onChange,onClose,onSay,onAnimate,onPr
         }}><CloudUpload size={17}/> {busy?'Menerbitkan...':'Terbitkan Sekarang'}</button>}
         <div className="form-actions">
           <button className="btn btn-primary" onClick={()=>{
-            downloadForGitHub(data);
-            setStatus('Fail published-site.json telah dimuat turun. Ia belum diterbitkan: muat naik fail ke GitHub dan Commit Changes.');
+            // When this page was reloaded, the visible page may be a public
+            // snapshot while the teacher's newest background survives in
+            // localStorage. Always export the actual saved teacher draft.
+            const draft=getStoredData();
+            const selected=draft??data;
+            downloadForGitHub(selected);
+            const hasBackground=Boolean(selected.site.backgroundImage||selected.settings.backgroundImage);
+            setStatus(hasBackground
+              ?'Fail published-site.json dimuat turun bersama gambar latar dalam draf guru. Penting: muat naik fail ini ke folder public di GitHub dan tekan Commit changes untuk menerbitkannya.'
+              :'Fail published-site.json dimuat turun, TETAPI tiada gambar latar dalam data yang disimpan. Buka Draf Setempat dan muat naik semula gambar sebelum menerbitkan.');
           }}><Download size={17}/> 1. Muat Turun Fail Terbitan</button>
           <a className="btn btn-soft" href={GITHUB_PUBLIC_DIRECTORY} target="_blank" rel="noreferrer"><CloudUpload size={17}/> 2. Buka Folder GitHub</a>
         </div>
+        <p className="hint"><strong>Semakan penting:</strong> Selepas memuat naik ke GitHub, fail mesti muncul sebagai <code>public/published-site.json</code> di repositori. Memuat turun sahaja tidak menerbitkan perubahan. Laman baru hanya dikongsi selepas Commit changes dan GitHub Actions berjaya.</p>
         <p className="hint">3. Upload fail published-site.json → Commit changes → semak GitHub Actions → muat semula laman pada peranti murid. Jangan terbitkan kata laluan, kunci API atau data peribadi murid.</p>
       </div></>}
     </div>
